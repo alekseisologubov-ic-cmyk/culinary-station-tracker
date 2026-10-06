@@ -1,574 +1,567 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Virgin Voyages - Culinary Station History</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    /* ============================================================
-       VIRGIN VOYAGES - SHIP VISIT REPORT STYLE SHEET
-       ============================================================ */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Virgin Voyages – Culinary Station History Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   1. DESIGN TOKENS  (VV design system – one place to change brand values)
+   ===================================================================== */
+:root{
+  --squid:#3C1053; --squid-stripe:#461D5C;
+  --red:#E10A0A; --red-deep:#CC0000;
+  --black:#1B1B1B; --charcoal:#252525;
+  --body:#333333; --muted:#6B6B6B;
+  --line:#E7E1EA; --bg:#F8F6F9; --white:#FFFFFF;
+  --green:#008A52; --green-bg:#EAF8F0;
+  --amber:#B25E00; --amber-bg:#FFF4E5;
+  --font-head:'Poppins',Arial,sans-serif;
+  --font-body:Calibri,Arial,sans-serif;
+  --radius:10px;
+}
 
-    :root {
-      --vv-squid: #3C1053;
-      --vv-squid-dark: #2A073C;
-      --vv-squid-light: #5A2175;
+/* =====================================================================
+   2. BASE
+   ===================================================================== */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--body);font:14px/1.5 var(--font-body);min-height:100vh;display:flex;flex-direction:column}
+button,input,select{font:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid rgba(225,10,10,.45);outline-offset:2px}
 
-      --vv-red: #E10A0A;
-      --vv-red-dark: #CC0000;
+/* =====================================================================
+   3. LAYOUT COMPONENTS
+   ===================================================================== */
+.band{background-color:var(--squid);
+  background-image:repeating-linear-gradient(45deg,var(--squid) 0 40px,var(--squid-stripe) 40px 80px);
+  border-bottom:4px solid var(--red);color:#fff;padding:20px 24px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.eyebrow{font:800 11px var(--font-head);letter-spacing:.08em;text-transform:uppercase}
+.eyebrow::before{content:"— ";color:var(--red)}
+.band h1{margin:4px 0 0;font:800 24px/1.1 var(--font-head)}
 
-      --vv-near-black: #1B1B1B;
-      --vv-body: #333333;
-      --vv-gray: #8A8A8A;
+.tabs{display:flex;gap:6px;background:rgba(255,255,255,.12);padding:4px;border-radius:30px}
+.tab{border:0;background:transparent;color:rgba(255,255,255,.85);padding:8px 18px;border-radius:20px;font:800 12px var(--font-head)}
+.tab[aria-selected="true"]{background:var(--red);color:#fff}
 
-      --vv-white: #FFFFFF;
+main{width:100%;max-width:1100px;margin:0 auto;padding:24px 16px 60px;flex:1}
+.view[hidden]{display:none}
 
-      --vv-line: #E7E1EA;
-      --vv-bg: #F8F6F9;
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{background:#fff;border:1px solid var(--line);border-top:3px solid var(--red);border-radius:var(--radius);padding:16px}
+.stat:nth-child(even){border-top-color:var(--squid)}
+.stat .lbl{font:800 10px var(--font-head);letter-spacing:.08em;text-transform:uppercase;color:var(--squid)}
+.stat .num{font:800 36px/1.1 var(--font-head);color:#000;margin:4px 0}
+.stat .cap{font-size:12px;color:var(--muted)}
 
-      --status-green: #008A52;
-      --status-green-bg: #EAF8F0;
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:0 4px 16px rgba(60,16,83,.04)}
+.card h2{margin:0 0 18px;padding-bottom:10px;border-bottom:1px solid var(--line);font:800 16px var(--font-head);color:var(--squid);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 
-      --status-blue: #2463B8;
-      --status-blue-bg: #EEF5FF;
+.callout{background-color:var(--black);background-image:repeating-linear-gradient(45deg,var(--black) 0 40px,var(--charcoal) 40px 80px);color:#fff;border-radius:var(--radius);padding:18px 22px;margin-bottom:20px}
+.callout .eyebrow{color:#fff}
+.callout p{margin:6px 0 0;color:#ddd}
 
-      --status-red: #CC0000;
-      --status-red-bg: #FFF1F1;
-    }
+/* =====================================================================
+   4. FORM
+   ===================================================================== */
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.field{margin-bottom:14px}
+.field label{display:block;margin-bottom:6px;font:800 10px var(--font-head);letter-spacing:.06em;text-transform:uppercase;color:var(--squid)}
+.field input,.field select{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--body)}
+.field input:focus{border-color:var(--squid)}
+.field.invalid input{border-color:var(--red-deep);background:#FFF8F8}
+.field .err{color:var(--red-deep);font-size:12px;margin-top:4px;min-height:0}
+.check{display:flex;align-items:center;gap:8px;margin:0 0 14px;font-size:13px}
+.check input{width:18px;height:18px}
 
-    *, *::before, *::after {
-      box-sizing: border-box;
-    }
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:8px 16px;border-radius:8px;border:1px solid var(--red);background:var(--red);color:#fff;font:800 12px var(--font-head)}
+.btn:hover{background:var(--red-deep)}
+.btn.block{width:100%;min-height:46px}
+.btn.ghost{background:#fff;color:var(--squid);border-color:var(--squid)}
+.btn.ghost:hover{background:rgba(60,16,83,.05)}
+.btn.small{min-height:32px;padding:4px 10px;font-size:11px}
+.btn.danger{background:#fff;color:var(--red-deep);border-color:var(--red-deep)}
+.btn.danger.confirm{background:var(--red-deep);color:#fff}
 
-    html, body {
-      width: 100%;
-      min-height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
-    }
+/* =====================================================================
+   5. TABLE
+   ===================================================================== */
+.toolbar{display:grid;grid-template-columns:1fr 220px;gap:12px;margin-bottom:8px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--bg);padding:12px;text-align:left;border-bottom:2px solid var(--line);font:800 10px var(--font-head);letter-spacing:.06em;text-transform:uppercase;color:var(--squid);white-space:nowrap}
+th button{all:unset;cursor:pointer}
+th button:hover{color:var(--red)}
+th[aria-sort="ascending"] button::after{content:" ▲"}
+th[aria-sort="descending"] button::after{content:" ▼"}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr.flag td{background:var(--amber-bg)}
+td.actions{white-space:nowrap;display:flex;gap:6px}
+.badge{display:inline-block;padding:3px 9px;border-radius:999px;font:800 10px var(--font-head);background:#EEF5FF;color:#2463B8}
+.badge.live{background:var(--green-bg);color:var(--green)}
+.badge.warn{background:var(--amber-bg);color:var(--amber)}
+.empty{text-align:center;color:var(--muted);padding:28px}
 
-    body {
-      background: var(--vv-bg);
-      color: var(--vv-body);
-      font-family: Arial, Calibri, 'Inter', sans-serif;
-      font-size: 14px;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
+/* =====================================================================
+   6. FOOTER + TOAST
+   ===================================================================== */
+footer{background:var(--black);color:#bbb;padding:14px 24px;font:700 10px var(--font-head);letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999px;margin-right:8px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--black);color:#fff;padding:12px 20px;border-radius:8px;border-left:4px solid var(--red);box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:10}
 
-    button, input, textarea, select {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* PURPLE BAND HEADER */
-    .band {
-      position: relative;
-      width: 100%;
-      margin: 0 auto;
-      padding: 20px 24px;
-      color: #FFFFFF;
-      background-color: var(--vv-squid);
-      background-image: repeating-linear-gradient(
-        45deg,
-        rgba(255,255,255,.055) 0,
-        rgba(255,255,255,.055) 2px,
-        transparent 2px,
-        transparent 55px
-      );
-      border-bottom: 4px solid var(--vv-red);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .band h1 {
-      margin: 4px 0 2px;
-      color: #FFFFFF;
-      font-size: 24px;
-      line-height: 1.1;
-      font-weight: 800;
-    }
-
-    .eyebrow {
-      color: rgba(255,255,255,.92);
-      font-size: 11px;
-      line-height: 1.2;
-      font-weight: 800;
-      letter-spacing: .07em;
-      text-transform: uppercase;
-    }
-
-    .nav-tabs {
-      display: flex;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.12);
-      padding: 4px;
-      border-radius: 30px;
-    }
-
-    .tab-btn {
-      border: none;
-      background: transparent;
-      color: rgba(255, 255, 255, 0.85);
-      padding: 8px 18px;
-      border-radius: 20px;
-      font-weight: 800;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .tab-btn.active {
-      background: var(--vv-red);
-      color: #FFFFFF;
-      box-shadow: 0 2px 8px rgba(225, 10, 10, 0.4);
-    }
-
-    /* CONTAINER & VIEWS */
-    .page-pad {
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px 16px 60px;
-      flex: 1;
-    }
-
-    .view {
-      display: none;
-    }
-
-    .view.active {
-      display: block;
-    }
-
-    /* CARDS */
-    .card {
-      background: #FFFFFF;
-      border: 1px solid var(--vv-line);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 16px rgba(60, 16, 83, 0.04);
-    }
-
-    .card-title {
-      color: var(--vv-squid);
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing: .03em;
-      margin-bottom: 18px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--vv-line);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* FORM STYLES */
-    .field {
-      margin-bottom: 15px;
-    }
-
-    .field label {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--vv-squid);
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-    }
-
-    .field input, .field select, .field textarea {
-      display: block;
-      width: 100%;
-      min-height: 44px;
-      padding: 10px 12px;
-      border: 1px solid var(--vv-line);
-      border-radius: 8px;
-      background: #FFFFFF;
-      color: var(--vv-body);
-      outline: none;
-      font-size: 14px;
-      transition: border-color 0.15s ease;
-    }
-
-    .field input:focus, .field select:focus, .field textarea:focus {
-      border-color: var(--vv-squid);
-      box-shadow: 0 0 0 2px rgba(60, 16, 83, .08);
-    }
-
-    .grid2 {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .grid3 {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    /* BUTTONS */
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: 46px;
-      padding: 10px 14px;
-      border: 1px solid var(--vv-red);
-      border-radius: 8px;
-      background: var(--vv-red);
-      color: #FFFFFF;
-      font-size: 13px;
-      font-weight: 800;
-      text-align: center;
-      gap: 8px;
-      transition: background 0.15s ease;
-    }
-
-    .btn-primary:hover {
-      background: var(--vv-red-dark);
-    }
-
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 40px;
-      padding: 8px 16px;
-      border: 1px solid var(--vv-squid);
-      border-radius: 8px;
-      background: #FFFFFF;
-      color: var(--vv-squid);
-      font-size: 12px;
-      font-weight: 800;
-      gap: 6px;
-    }
-
-    .btn-secondary:hover {
-      background: rgba(60, 16, 83, .04);
-    }
-
-    /* TABLES */
-    .table-container {
-      overflow-x: auto;
-      margin-top: 10px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 13px;
-    }
-
-    th {
-      background: var(--vv-bg);
-      padding: 12px;
-      font-weight: 800;
-      color: var(--vv-squid);
-      border-bottom: 2px solid var(--vv-line);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-    }
-
-    td {
-      padding: 12px;
-      border-bottom: 1px solid var(--vv-line);
-      color: var(--vv-body);
-    }
-
-    tr:hover td {
-      background: rgba(60, 16, 83, .01);
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 800;
-      background: var(--status-blue-bg);
-      color: var(--status-blue);
-    }
-
-    /* FOOTER */
-    .footer {
-      width: 100%;
-      margin: auto 0 0;
-      padding: 16px 24px;
-      background: #FFFFFF;
-      border-top: 1px solid var(--vv-line);
-      text-align: center;
-      color: var(--vv-gray);
-      font-size: 11px;
-    }
-
-    @media (max-width: 768px) {
-      .grid2, .grid3 {
-        grid-template-columns: 1fr;
-      }
-      .band {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-  </style>
+@media(max-width:768px){
+  .g2,.g3,.stats,.toolbar{grid-template-columns:1fr}
+  .band{flex-direction:column;align-items:flex-start}
+}
+</style>
 </head>
 <body>
 
-  <!-- VIRGIN VOYAGES HEADER BAND -->
-  <div class="band">
-    <div>
-      <div class="eyebrow">Virgin Voyages Operations</div>
-      <h1>Culinary Station History Tracker</h1>
-    </div>
-    <div class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('log-entry-view')">
-        ➕ Add Entry
-      </button>
-      <button class="tab-btn" onclick="switchTab('history-view')">
-        📋 History Log
-      </button>
-    </div>
+<header class="band">
+  <div>
+    <div class="eyebrow">Virgin Voyages Operations</div>
+    <h1>Culinary Station History Tracker</h1>
   </div>
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="tab-entry"   aria-controls="view-entry"   aria-selected="true">Add entry</button>
+    <button class="tab" role="tab" id="tab-history" aria-controls="view-history" aria-selected="false">History log</button>
+  </div>
+</header>
 
-  <div class="page-pad">
+<main>
+  <!-- Summary cards (always visible) -->
+  <section class="stats" aria-label="Summary">
+    <div class="stat"><div class="lbl">Total records</div><div class="num" id="stat-total">0</div><div class="cap">All station assignments logged</div></div>
+    <div class="stat"><div class="lbl">Currently working</div><div class="num" id="stat-active">0</div><div class="cap">Crew with an open or current assignment</div></div>
+    <div class="stat"><div class="lbl">Venues covered</div><div class="num" id="stat-venues">0</div><div class="cap">Distinct venues in the log</div></div>
+  </section>
 
-    <!-- TAB 1: ADD LOG ENTRY -->
-    <div id="log-entry-view" class="view active">
-      <div class="card">
-        <div class="card-title">
-          ✍️ Record Crew Work History
+  <!-- VIEW 1: ENTRY FORM -->
+  <section class="view" id="view-entry" role="tabpanel" aria-labelledby="tab-entry">
+    <div class="card">
+      <h2><span id="form-title">Record crew work history</span></h2>
+      <form id="entry-form" novalidate>
+        <div class="grid g3">
+          <div class="field"><label for="cm_id">Crew member ID</label><input id="cm_id" name="cm_id" placeholder="e.g. CM-104" autocomplete="off"><div class="err"></div></div>
+          <div class="field"><label for="cm_name">Crew member name</label><input id="cm_name" name="cm_name" placeholder="e.g. Marcus Vance" autocomplete="off"><div class="err"></div></div>
+          <div class="field"><label for="position">Position / title</label><input id="position" name="position" list="dl-positions" placeholder="e.g. Sous Chef" autocomplete="off"><div class="err"></div></div>
         </div>
+        <div class="grid g2">
+          <div class="field"><label for="venue">Venue</label><input id="venue" name="venue" list="dl-venues" placeholder="e.g. Extra Virgin" autocomplete="off"><div class="err"></div></div>
+          <div class="field"><label for="station">Station worked</label><input id="station" name="station" list="dl-stations" placeholder="e.g. Grill #1" autocomplete="off"><div class="err"></div></div>
+        </div>
+        <div class="grid g2">
+          <div class="field"><label for="from_date">From date</label><input type="date" id="from_date" name="from_date"><div class="err"></div></div>
+          <div class="field"><label for="to_date">To date</label><input type="date" id="to_date" name="to_date"><div class="err"></div></div>
+        </div>
+        <label class="check"><input type="checkbox" id="ongoing"> Still working this station (no end date)</label>
 
-        <form id="history-form" onsubmit="saveEntry(event)">
-          <div class="grid3">
-            <div class="field">
-              <label for="cm-id">Crew Member ID</label>
-              <input type="text" id="cm-id" placeholder="e.g. CM-104" required>
-            </div>
+        <datalist id="dl-positions"></datalist>
+        <datalist id="dl-venues"></datalist>
+        <datalist id="dl-stations"></datalist>
 
-            <div class="field">
-              <label for="cm-name">Crew Member Name</label>
-              <input type="text" id="cm-name" placeholder="e.g. Chef Marcus Vance" required>
-            </div>
+        <div class="grid g2">
+          <button type="submit" class="btn block" id="submit-btn">Save work history record</button>
+          <button type="button" class="btn ghost block" id="cancel-edit" hidden>Cancel edit</button>
+        </div>
+      </form>
+    </div>
+  </section>
 
-            <div class="field">
-              <label for="cm-position">Position / Title</label>
-              <input type="text" id="cm-position" placeholder="e.g. Sous Chef, Line Cook" required>
-            </div>
-          </div>
+  <!-- VIEW 2: LEDGER -->
+  <section class="view" id="view-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+    <div class="callout" id="conflict-callout" hidden>
+      <div class="eyebrow">Read this twice</div>
+      <p id="conflict-text"></p>
+    </div>
 
-          <div class="grid2">
-            <div class="field">
-              <label for="venue-name">Venue / Location</label>
-              <input type="text" id="venue-name" placeholder="e.g. Extra Virgin, The Wake" required>
-            </div>
-
-            <div class="field">
-              <label for="station-worked">Station Worked</label>
-              <input type="text" id="station-worked" placeholder="e.g. Hot Line - Grill #1, Pastry, Expo" required>
-            </div>
-          </div>
-
-          <div class="grid2">
-            <div class="field">
-              <label for="from-date">From Date</label>
-              <input type="date" id="from-date" required>
-            </div>
-
-            <div class="field">
-              <label for="to-date">To Date</label>
-              <input type="date" id="to-date" required>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-primary" style="margin-top: 10px;">
-            💾 Save Work History Record
-          </button>
-        </form>
+    <div class="card">
+      <h2>
+        <span>Master station ledger</span>
+        <button class="btn ghost small" id="export-btn" type="button">Export CSV</button>
+      </h2>
+      <div class="toolbar">
+        <div class="field" style="margin:0"><input type="search" id="search" placeholder="Search name, ID, venue, station…" aria-label="Search"></div>
+        <div class="field" style="margin:0"><select id="venue-filter" aria-label="Filter by venue"><option value="">All venues</option></select></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr id="thead-row"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
       </div>
     </div>
+  </section>
+</main>
 
-    <!-- TAB 2: HISTORY LEDGER -->
-    <div id="history-view" class="view">
-      <div class="card">
-        <div class="card-title" style="justify-content: space-between;">
-          <span>📄 Master Station Ledger</span>
-          <button class="btn-secondary" onclick="exportToCSV()">
-            📥 Export CSV
-          </button>
-        </div>
+<footer>
+  <span><span class="pill">Confidential</span>Internal use only — not for distribution</span>
+  <span>Culinary Station History · Virgin Voyages</span>
+</footer>
 
-        <div class="field" style="margin-top: 10px;">
-          <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Search by CM Name, ID, Venue, or Station...">
-        </div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>CM ID</th>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Venue</th>
-                <th>Station Worked</th>
-                <th>From Date</th>
-                <th>To Date</th>
-              </tr>
-            </thead>
-            <tbody id="master-history-table">
-              <!-- Populated dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+<script>
+'use strict';
 
-  </div>
+/* =====================================================================
+   A. CONFIG – everything you might tune lives here
+   ===================================================================== */
+const CONFIG = {
+  storageKey: 'vv_culinary_history_v2',
+  openEndDate: '9999-12-31',           // sentinel used for overlap maths
+  columns: [                            // drives the table header, sorting and CSV
+    { key: 'cm_id',     label: 'CM ID' },
+    { key: 'cm_name',   label: 'Name' },
+    { key: 'position',  label: 'Position' },
+    { key: 'venue',     label: 'Venue' },
+    { key: 'station',   label: 'Station' },
+    { key: 'from_date', label: 'From' },
+    { key: 'to_date',   label: 'To' },
+  ],
+  fields: {                             // single source of truth for validation
+    cm_id:     { label: 'Crew member ID', required: true, pattern: /^[A-Za-z0-9\-_.]{2,20}$/, patternMsg: 'Use letters, numbers or dashes (e.g. CM-104).' },
+    cm_name:   { label: 'Name',           required: true, max: 80 },
+    position:  { label: 'Position',       required: true, max: 60 },
+    venue:     { label: 'Venue',          required: true, max: 60 },
+    station:   { label: 'Station',        required: true, max: 60 },
+    from_date: { label: 'From date',      required: true },
+    to_date:   { label: 'To date',        required: false },
+  },
+  seed: [
+    { cm_id:'CM-101', cm_name:'Marcus Vance', position:'Sous Chef', venue:'Extra Virgin', station:'Expeditor / Pass', from_date:'2026-10-01', to_date:'2026-10-05' },
+    { cm_id:'CM-102', cm_name:'John Doe',     position:'Line Cook', venue:'The Wake',     station:'Grill #1',         from_date:'2026-09-20', to_date:'2026-09-28' },
+  ],
+};
 
-  <div class="footer">
-    Virgin Voyages &copy; 2026 | Culinary Operations Station Tracker
-  </div>
+/* =====================================================================
+   B. STORAGE – the only code that touches localStorage.
+      Swap this one object for an API / Google Sheets / BigQuery call later.
+   ===================================================================== */
+const Storage = {
+  load() {
+    try {
+      const raw = localStorage.getItem(CONFIG.storageKey);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { console.warn('Storage read failed', e); }
+    return CONFIG.seed.map(r => ({ id: Utils.uid(), ...r }));
+  },
+  save(records) {
+    try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(records)); return true; }
+    catch (e) { console.warn('Storage write failed', e); return false; }
+  },
+};
 
-  <script>
-    let historyLogs = JSON.parse(localStorage.getItem('culinary_history_logs')) || [
-      {
-        id: "REC-1001",
-        cm_id: "CM-101",
-        cm_name: "Marcus Vance",
-        position: "Sous Chef",
-        venue: "Extra Virgin",
-        station: "Expeditor / Pass",
-        from_date: "2026-10-01",
-        to_date: "2026-10-05"
-      },
-      {
-        id: "REC-1002",
-        cm_id: "CM-102",
-        cm_name: "John Doe",
-        position: "Line Cook",
-        venue: "The Wake",
-        station: "Grill #1",
-        from_date: "2026-09-20",
-        to_date: "2026-09-28"
-      }
-    ];
+/* =====================================================================
+   C. UTILS
+   ===================================================================== */
+const Utils = {
+  uid: () => (crypto.randomUUID ? crypto.randomUUID() : 'r' + Date.now() + Math.random().toString(16).slice(2)),
+  today: () => new Date().toISOString().slice(0, 10),
+  end: r => r.to_date || CONFIG.openEndDate,
+  isActive(r, today = Utils.today()) { return r.from_date <= today && today <= Utils.end(r); },
+  overlaps: (a, b) => a.from_date <= Utils.end(b) && b.from_date <= Utils.end(a),
+  uniq: arr => [...new Set(arr.filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+  // Build DOM safely – user text is NEVER parsed as HTML (prevents XSS)
+  el(tag, props = {}, ...kids) {
+    const n = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === 'class') n.className = v;
+      else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v);
+    }
+    kids.flat().forEach(c => n.append(c instanceof Node ? c : document.createTextNode(c ?? '')));
+    return n;
+  },
+};
 
-    window.onload = function() {
-      renderHistoryTable();
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('from-date').value = today;
-      document.getElementById('to-date').value = today;
+/* =====================================================================
+   D. STORE – app state + all business rules (no DOM in here)
+   ===================================================================== */
+const Store = {
+  records: [],
+  ui: { search: '', venue: '', sortKey: 'from_date', sortDir: 'desc', editingId: null },
+
+  init() { this.records = Storage.load(); },
+  persist() { return Storage.save(this.records); },
+
+  validate(data) {
+    const errors = {};
+    for (const [key, rule] of Object.entries(CONFIG.fields)) {
+      const v = (data[key] || '').trim();
+      if (rule.required && !v) errors[key] = `${rule.label} is required.`;
+      else if (v && rule.max && v.length > rule.max) errors[key] = `Max ${rule.max} characters.`;
+      else if (v && rule.pattern && !rule.pattern.test(v)) errors[key] = rule.patternMsg;
+    }
+    if (data.from_date && data.to_date && data.to_date < data.from_date)
+      errors.to_date = 'End date cannot be before the start date.';
+    return errors;
+  },
+
+  upsert(data) {
+    const clean = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, (v || '').trim()]));
+    clean.cm_id = clean.cm_id.toUpperCase();
+    const id = this.ui.editingId;
+    if (id) this.records = this.records.map(r => (r.id === id ? { ...r, ...clean } : r));
+    else this.records.unshift({ id: Utils.uid(), ...clean });
+    this.ui.editingId = null;
+    return this.persist();
+  },
+
+  remove(id) { this.records = this.records.filter(r => r.id !== id); return this.persist(); },
+
+  // Records for the same crew member whose date ranges overlap (different stations at once = likely data error)
+  conflictIds() {
+    const flagged = new Set();
+    const byCm = {};
+    this.records.forEach(r => (byCm[r.cm_id] ||= []).push(r));
+    Object.values(byCm).forEach(list => {
+      for (let i = 0; i < list.length; i++)
+        for (let j = i + 1; j < list.length; j++)
+          if (Utils.overlaps(list[i], list[j])) { flagged.add(list[i].id); flagged.add(list[j].id); }
+    });
+    return flagged;
+  },
+
+  visible() {
+    const q = this.ui.search.toLowerCase();
+    const { venue, sortKey, sortDir } = this.ui;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return this.records
+      .filter(r => (!venue || r.venue === venue) &&
+        (!q || CONFIG.columns.some(c => String(r[c.key] || '').toLowerCase().includes(q))))
+      .sort((a, b) => String(a[sortKey] || CONFIG.openEndDate).localeCompare(String(b[sortKey] || CONFIG.openEndDate)) * dir);
+  },
+
+  stats() {
+    const active = this.records.filter(r => Utils.isActive(r));
+    return {
+      total: this.records.length,
+      active: new Set(active.map(r => r.cm_id)).size,
+      venues: new Set(this.records.map(r => r.venue)).size,
     };
+  },
+};
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      
-      document.getElementById(tabId).classList.add('active');
-      event.currentTarget.classList.add('active');
+/* =====================================================================
+   E. EXPORT – CSV that is safe for Excel / Google Sheets
+   ===================================================================== */
+const Exporter = {
+  cell(v) {
+    let s = String(v ?? '');
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;          // block formula injection
+    return `"${s.replace(/"/g, '""')}"`;                // escape quotes
+  },
+  csv(records) {
+    const head = CONFIG.columns.map(c => this.cell(c.label)).join(',');
+    const rows = records.map(r => CONFIG.columns.map(c => this.cell(r[c.key] || (c.key === 'to_date' ? 'Present' : ''))).join(','));
+    return '\ufeff' + [head, ...rows].join('\r\n');     // BOM keeps accents correct
+  },
+  download(records) {
+    const url = URL.createObjectURL(new Blob([this.csv(records)], { type: 'text/csv;charset=utf-8' }));
+    const a = Utils.el('a', { href: url, download: `VV_Culinary_Work_History_${Utils.today()}.csv` });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+};
 
-      if (tabId === 'history-view') {
-        renderHistoryTable();
+/* =====================================================================
+   F. VIEW – pure rendering from state
+   ===================================================================== */
+const View = {
+  $: id => document.getElementById(id),
+
+  toast(msg) {
+    const t = this.$('toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(this._t); this._t = setTimeout(() => (t.hidden = true), 2600);
+  },
+
+  switchTab(name) {
+    ['entry', 'history'].forEach(n => {
+      const on = n === name;
+      this.$('view-' + n).hidden = !on;
+      this.$('tab-' + n).setAttribute('aria-selected', on);
+    });
+  },
+
+  renderStats() {
+    const s = Store.stats();
+    this.$('stat-total').textContent = s.total;
+    this.$('stat-active').textContent = s.active;
+    this.$('stat-venues').textContent = s.venues;
+  },
+
+  renderLists() {
+    const fill = (id, vals) => this.$(id).replaceChildren(...vals.map(v => Utils.el('option', { value: v })));
+    fill('dl-positions', Utils.uniq(Store.records.map(r => r.position)));
+    fill('dl-venues',    Utils.uniq(Store.records.map(r => r.venue)));
+    fill('dl-stations',  Utils.uniq(Store.records.map(r => r.station)));
+
+    const sel = this.$('venue-filter'), cur = Store.ui.venue;
+    sel.replaceChildren(Utils.el('option', { value: '' }, 'All venues'),
+      ...Utils.uniq(Store.records.map(r => r.venue)).map(v => Utils.el('option', { value: v }, v)));
+    sel.value = cur;
+  },
+
+  renderHead() {
+    const { sortKey, sortDir } = Store.ui;
+    const ths = CONFIG.columns.map(c => {
+      const th = Utils.el('th', { scope: 'col' },
+        Utils.el('button', { type: 'button', 'data-sort': c.key }, c.label));
+      if (c.key === sortKey) th.setAttribute('aria-sort', sortDir === 'asc' ? 'ascending' : 'descending');
+      return th;
+    });
+    ths.push(Utils.el('th', { scope: 'col' }, 'Actions'));
+    this.$('thead-row').replaceChildren(...ths);
+  },
+
+  renderTable() {
+    const rows = Store.visible(), flagged = Store.conflictIds();
+    const body = this.$('tbody');
+    if (!rows.length) {
+      body.replaceChildren(Utils.el('tr', {}, Utils.el('td', { colspan: CONFIG.columns.length + 1, class: 'empty' }, 'No matching work records.')));
+      return;
+    }
+    body.replaceChildren(...rows.map(r => {
+      const open = !r.to_date;
+      const tr = Utils.el('tr', { class: flagged.has(r.id) ? 'flag' : '' },
+        Utils.el('td', {}, Utils.el('strong', {}, r.cm_id)),
+        Utils.el('td', {}, r.cm_name),
+        Utils.el('td', {}, Utils.el('span', { class: 'badge' }, r.position)),
+        Utils.el('td', {}, r.venue),
+        Utils.el('td', {}, r.station),
+        Utils.el('td', {}, r.from_date),
+        Utils.el('td', {}, open ? Utils.el('span', { class: 'badge live' }, 'Present') : r.to_date,
+                           flagged.has(r.id) ? Utils.el('span', { class: 'badge warn', title: 'Overlaps another record for this crew member', style: 'margin-left:6px' }, 'Overlap') : ''),
+        Utils.el('td', { class: 'actions' },
+          Utils.el('button', { class: 'btn ghost small', type: 'button', 'data-edit': r.id }, 'Edit'),
+          Utils.el('button', { class: 'btn danger small', type: 'button', 'data-del': r.id }, 'Delete')),
+      );
+      return tr;
+    }));
+  },
+
+  renderConflicts() {
+    const n = Store.conflictIds().size;
+    this.$('conflict-callout').hidden = n === 0;
+    if (n) this.$('conflict-text').textContent =
+      `${n} records have overlapping dates for the same crew member. Check they are not duplicates or a wrong end date — they are highlighted below.`;
+  },
+
+  renderAll() {
+    this.renderStats(); this.renderLists(); this.renderHead(); this.renderTable(); this.renderConflicts();
+  },
+
+  // ---- form helpers
+  readForm() {
+    const f = this.$('entry-form');
+    const data = Object.fromEntries(Object.keys(CONFIG.fields).map(k => [k, f.elements[k].value]));
+    if (this.$('ongoing').checked) data.to_date = '';
+    return data;
+  },
+  showErrors(errors) {
+    document.querySelectorAll('#entry-form .field').forEach(f => {
+      const input = f.querySelector('input'); const msg = errors[input?.name];
+      f.classList.toggle('invalid', !!msg);
+      const e = f.querySelector('.err'); if (e) e.textContent = msg || '';
+    });
+    const first = Object.keys(errors)[0];
+    if (first) this.$('entry-form').elements[first].focus();
+  },
+  resetForm() {
+    this.$('entry-form').reset();
+    this.$('from_date').value = Utils.today();
+    this.$('to_date').disabled = false;
+    this.$('form-title').textContent = 'Record crew work history';
+    this.$('submit-btn').textContent = 'Save work history record';
+    this.$('cancel-edit').hidden = true;
+    this.showErrors({});
+  },
+  fillForm(r) {
+    const f = this.$('entry-form');
+    Object.keys(CONFIG.fields).forEach(k => (f.elements[k].value = r[k] || ''));
+    this.$('ongoing').checked = !r.to_date;
+    this.$('to_date').disabled = !r.to_date;
+    this.$('form-title').textContent = `Editing ${r.cm_name}`;
+    this.$('submit-btn').textContent = 'Update record';
+    this.$('cancel-edit').hidden = false;
+  },
+};
+
+/* =====================================================================
+   G. CONTROLLER – wires events to Store + View (no inline onclick anywhere)
+   ===================================================================== */
+const App = {
+  init() {
+    Store.init();
+    View.resetForm();
+    View.renderAll();
+    View.switchTab('entry');
+
+    // tabs
+    View.$('tab-entry').addEventListener('click', () => View.switchTab('entry'));
+    View.$('tab-history').addEventListener('click', () => { View.renderAll(); View.switchTab('history'); });
+
+    // form
+    View.$('entry-form').addEventListener('submit', e => { e.preventDefault(); this.submit(); });
+    View.$('cancel-edit').addEventListener('click', () => { Store.ui.editingId = null; View.resetForm(); });
+    View.$('ongoing').addEventListener('change', e => {
+      View.$('to_date').disabled = e.target.checked;
+      if (e.target.checked) View.$('to_date').value = '';
+    });
+
+    // search / filter / sort (one delegated listener each)
+    View.$('search').addEventListener('input', e => { Store.ui.search = e.target.value; View.renderTable(); });
+    View.$('venue-filter').addEventListener('change', e => { Store.ui.venue = e.target.value; View.renderTable(); });
+    View.$('thead-row').addEventListener('click', e => {
+      const key = e.target.closest('[data-sort]')?.dataset.sort; if (!key) return;
+      const u = Store.ui;
+      u.sortDir = (u.sortKey === key && u.sortDir === 'asc') ? 'desc' : 'asc';
+      u.sortKey = key; View.renderHead(); View.renderTable();
+    });
+
+    // row actions (edit / two-step delete)
+    View.$('tbody').addEventListener('click', e => {
+      const edit = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
+      if (edit) {
+        const r = Store.records.find(x => x.id === edit.dataset.edit); if (!r) return;
+        Store.ui.editingId = r.id; View.fillForm(r); View.switchTab('entry');
+      } else if (del) {
+        if (!del.classList.contains('confirm')) {
+          del.classList.add('confirm'); del.textContent = 'Sure?';
+          setTimeout(() => { del.classList.remove('confirm'); del.textContent = 'Delete'; }, 3000);
+        } else {
+          Store.remove(del.dataset.del); View.renderAll(); View.toast('Record deleted.');
+        }
       }
-    }
+    });
 
-    function saveEntry(e) {
-      e.preventDefault();
+    View.$('export-btn').addEventListener('click', () => {
+      Exporter.download(Store.visible()); View.toast('CSV exported (respects current filters).');
+    });
+  },
 
-      const newRecord = {
-        id: "REC-" + Math.floor(1000 + Math.random() * 9000),
-        cm_id: document.getElementById('cm-id').value,
-        cm_name: document.getElementById('cm-name').value,
-        position: document.getElementById('cm-position').value,
-        venue: document.getElementById('venue-name').value,
-        station: document.getElementById('station-worked').value,
-        from_date: document.getElementById('from-date').value,
-        to_date: document.getElementById('to-date').value
-      };
+  submit() {
+    const data = View.readForm();
+    const errors = Store.validate(data);
+    View.showErrors(errors);
+    if (Object.keys(errors).length) return;
 
-      historyLogs.unshift(newRecord);
-      localStorage.setItem('culinary_history_logs', JSON.stringify(historyLogs));
+    const wasEdit = !!Store.ui.editingId;
+    const ok = Store.upsert(data);
+    View.resetForm(); View.renderAll(); View.switchTab('history');
+    View.toast(ok ? (wasEdit ? 'Record updated.' : 'Record saved.')
+                  : 'Saved for this session only — browser storage is unavailable.');
+  },
+};
 
-      document.getElementById('history-form').reset();
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('from-date').value = today;
-      document.getElementById('to-date').value = today;
-
-      alert('Work History Record Saved Successfully!');
-      switchTab('history-view');
-    }
-
-    function renderHistoryTable() {
-      const tableBody = document.getElementById('master-history-table');
-      if (!tableBody) return;
-      tableBody.innerHTML = '';
-
-      if (historyLogs.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#8A8A8A;">No historical work records found.</td></tr>';
-        return;
-      }
-
-      historyLogs.forEach(log => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${log.cm_id}</strong></td>
-          <td>${log.cm_name}</td>
-          <td><span class="badge">${log.position}</span></td>
-          <td>${log.venue}</td>
-          <td>${log.station}</td>
-          <td>${log.from_date}</td>
-          <td>${log.to_date}</td>
-        `;
-        tableBody.appendChild(tr);
-      });
-    }
-
-    function filterTable() {
-      const query = document.getElementById('search-input').value.toLowerCase();
-      const rows = document.querySelectorAll('#master-history-table tr');
-
-      rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(query) ? '' : 'none';
-      });
-    }
-
-    function exportToCSV() {
-      let csv = 'Record ID,CM ID,CM Name,Position,Venue,Station Worked,From Date,To Date\n';
-      historyLogs.forEach(r => {
-        csv += `"${r.id}","${r.cm_id}","${r.cm_name}","${r.position}","${r.venue}","${r.station}","${r.from_date}","${r.to_date}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.setAttribute('href', url);
-      a.setAttribute('download', `Virgin_Culinary_Work_History_${new Date().toISOString().slice(0,10)}.csv`);
-      a.click();
-    }
-  </script>
+document.addEventListener('DOMContentLoaded', () => App.init());
+</script>
 </body>
 </html>
