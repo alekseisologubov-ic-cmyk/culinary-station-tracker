@@ -134,8 +134,38 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--black);color:#fff;padding:12px 20px;border-radius:8px;border-left:4px solid var(--red);box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:10}
 
 @media(max-width:768px){
-  .g2,.g3,.stats,.stats.four,.toolbar{grid-template-columns:1fr}
-  .band{flex-direction:column;align-items:flex-start}
+  .g2,.g3,.toolbar,.stats.four,.stats{grid-template-columns:1fr 1fr}
+  .g2,.g3,.toolbar{grid-template-columns:1fr}
+  .band{flex-direction:column;align-items:stretch;padding:16px}
+  .band h1{font-size:20px}
+  .tabs{flex-wrap:wrap;border-radius:18px;justify-content:center}
+  .tab{flex:1 1 auto;padding:10px 12px;min-height:40px;text-align:center}
+  main{padding:16px 12px 40px}
+  .card{padding:16px}
+  .stat{padding:12px}
+  .stat .num{font-size:28px}
+  .field input,.field select{font-size:16px}          /* stops iOS zooming into fields */
+  .btn{min-height:44px}
+  .btn.small{min-height:38px}
+  .seg button{flex:1 1 auto;min-height:40px}
+  footer{flex-direction:column}
+}
+@media(max-width:600px){
+  /* tables become stacked cards: one label/value pair per line */
+  table.stack thead{display:none}
+  table.stack,table.stack tbody,table.stack tr,table.stack td{display:block;width:100%}
+  table.stack tr{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;padding:6px 12px;background:#fff}
+  table.stack tr.flag{background:var(--amber-bg)}
+  table.stack td{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);text-align:right}
+  table.stack td:empty{display:none}                  /* skip blank values (e.g. empty Note) */
+  table.stack td:last-child{border-bottom:0}
+  table.stack td::before{content:attr(data-label);font:800 10px var(--font-head);letter-spacing:.06em;text-transform:uppercase;color:var(--squid);text-align:left;flex:0 0 38%}
+  table.stack td.wide{max-width:none;min-width:0}
+  table.stack td.actions{justify-content:flex-end}
+  table.stack td.actions::before{display:none}
+  table.stack .barcell{min-width:0;flex:1;justify-content:flex-end}
+  table.stack td.empty{display:block;text-align:center}
+  table.stack td.empty::before{display:none}
 }
 </style>
 </head>
@@ -228,7 +258,7 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
         <div class="field" style="margin:0"><select id="venue-filter" aria-label="Filter by venue"><option value="">All venues</option></select></div>
       </div>
       <div class="table-wrap">
-        <table>
+        <table class="stack">
           <thead><tr id="thead-row"></tr></thead>
           <tbody id="tbody"></tbody>
         </table>
@@ -668,13 +698,13 @@ const Reports = (() => {
         const text = String(c.get(r, i));
         if (c.bar) {
           const w = Math.max(0, Math.min(100, Number(c.bar(r, i)) || 0));
-          return Utils.el('td', {}, Utils.el('div', { class: 'barcell' },
+          return Utils.el('td', { 'data-label': c.label }, Utils.el('div', { class: 'barcell' },
             Utils.el('div', { class: 'bartrack' }, Utils.el('span', { class: 'barfill' + (i === 0 ? ' top' : ''), style: `width:${w}%` })),
             Utils.el('b', {}, text)));
         }
-        return Utils.el('td', c.wide ? { class: 'wide' } : {}, text);
+        return Utils.el('td', c.wide ? { class: 'wide', 'data-label': c.label } : { 'data-label': c.label }, text);
       })));
-      return Utils.el('div', { class: 'table-wrap' }, Utils.el('table', {}, Utils.el('thead', {}, head), Utils.el('tbody', {}, body)));
+      return Utils.el('div', { class: 'table-wrap' }, Utils.el('table', { class: 'stack' }, Utils.el('thead', {}, head), Utils.el('tbody', {}, body)));
     },
 
     profile() {
@@ -856,6 +886,8 @@ const View = {
           Utils.el('button', { class: 'btn ghost small', type: 'button', 'data-edit': r.id }, 'Edit'),
           Utils.el('button', { class: 'btn danger small', type: 'button', 'data-del': r.id }, 'Delete')),
       );
+      const labels = [...CONFIG.columns.map(c => c.label), 'Actions'];
+      [...tr.children].forEach((td, i) => td.setAttribute('data-label', labels[i]));
       return tr;
     }));
   },
