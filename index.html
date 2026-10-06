@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Virgin Voyages - Culinary Station History</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <style>
     /* ============================================================
        VIRGIN VOYAGES - SHIP VISIT REPORT STYLE SHEET
@@ -272,80 +271,4 @@
     /* TABLES */
     .table-container {
       overflow-x: auto;
-      margin-top: 10px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 13px;
-    }
-
-    th {
-      background: var(--vv-bg);
-      padding: 12px;
-      font-weight: 800;
-      color: var(--vv-squid);
-      border-bottom: 2px solid var(--vv-line);
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-    }
-
-    td {
-      padding: 12px;
-      border-bottom: 1px solid var(--vv-line);
-      color: var(--vv-body);
-    }
-
-    tr:hover td {
-      background: rgba(60, 16, 83, .01);
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 10px;
-      font-weight: 800;
-      background: var(--status-blue-bg);
-      color: var(--status-blue);
-    }
-
-    /* FOOTER */
-    .footer {
-      width: 100%;
-      margin: auto 0 0;
-      padding: 16px 24px;
-      background: #FFFFFF;
-      border-top: 1px solid var(--vv-line);
-      text-align: center;
-      color: var(--vv-gray);
-      font-size: 11px;
-    }
-
-    @media (max-width: 768px) {
-      .grid2, .grid3 {
-        grid-template-columns: 1fr;
-      }
-      .band {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <!-- VIRGIN VOYAGES HEADER BAND -->
-  <div class="band">
-    <div>
-      <div class="eyebrow">Virgin Voyages Operations</div>
-      <h1>Culinary Station History Tracker</h1>
-    </div>
-    <div class="nav-tabs">
-      <button class="tab-btn active" onclick="switchTab('log-entry-view')">
-        <i data-lucide="plus-circle" style="width:14px; height:14px;"></i> Add Entry
-      </button>
-      <button class="tab-btn" onclick="switchTab('history-view')">
+      margin-top: 10px
