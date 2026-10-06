@@ -3,76 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Virgin Culinary Crew - Work History Tracker</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>Virgin Voyages - Culinary Station History</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
   <style>
+    /* ============================================================
+       VIRGIN VOYAGES - SHIP VISIT REPORT STYLE SHEET
+       ============================================================ */
+
     :root {
-      --primary: #E10600;
-      --primary-dark: #B30000;
-      --card-bg: #ffffff;
-      --text-main: #1C1C1E;
-      --text-muted: #6E6E73;
-      --border: #E5E5EA;
-      --bg-gray: #F2F2F7;
-      --radius: 14px;
+      --vv-squid: #3C1053;
+      --vv-squid-dark: #2A073C;
+      --vv-squid-light: #5A2175;
+
+      --vv-red: #E10A0A;
+      --vv-red-dark: #CC0000;
+
+      --vv-near-black: #1B1B1B;
+      --vv-body: #333333;
+      --vv-gray: #8A8A8A;
+
+      --vv-white: #FFFFFF;
+
+      --vv-line: #E7E1EA;
+      --vv-bg: #F8F6F9;
+
+      --status-green: #008A52;
+      --status-green-bg: #EAF8F0;
+
+      --status-blue: #2463B8;
+      --status-blue-bg: #EEF5FF;
+
+      --status-red: #CC0000;
+      --status-red-bg: #FFF1F1;
     }
 
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow-x: hidden;
     }
 
     body {
-      background-color: var(--bg-gray);
-      color: var(--text-main);
-      min-height: 100vh;
+      background: var(--vv-bg);
+      color: var(--vv-body);
+      font-family: Arial, Calibri, 'Inter', sans-serif;
+      font-size: 14px;
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
     }
 
-    /* Virgin Navigation Bar */
-    header {
-      background-color: #000000;
-      color: white;
-      padding: 16px 24px;
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* PURPLE BAND HEADER */
+    .band {
+      position: relative;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 24px;
+      color: #FFFFFF;
+      background-color: var(--vv-squid);
+      background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,.055) 0,
+        rgba(255,255,255,.055) 2px,
+        transparent 2px,
+        transparent 55px
+      );
+      border-bottom: 4px solid var(--vv-red);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 4px solid var(--primary);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .band h1 {
+      margin: 4px 0 2px;
+      color: #FFFFFF;
+      font-size: 24px;
+      line-height: 1.1;
+      font-weight: 800;
     }
 
-    .brand-logo {
-      background: var(--primary);
-      color: white;
-      font-weight: 900;
-      font-style: italic;
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-size: 1.2rem;
-      letter-spacing: -0.5px;
-    }
-
-    .brand-title {
-      font-size: 1.1rem;
-      font-weight: 700;
+    .eyebrow {
+      color: rgba(255,255,255,.92);
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
     }
 
     .nav-tabs {
       display: flex;
       gap: 8px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.12);
       padding: 4px;
       border-radius: 30px;
     }
@@ -80,11 +123,11 @@
     .tab-btn {
       border: none;
       background: transparent;
-      color: #ccc;
+      color: rgba(255, 255, 255, 0.85);
       padding: 8px 18px;
       border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.85rem;
+      font-weight: 800;
+      font-size: 12px;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
@@ -93,16 +136,17 @@
     }
 
     .tab-btn.active {
-      background: var(--primary);
-      color: white;
-      box-shadow: 0 2px 8px rgba(225, 6, 0, 0.4);
+      background: var(--vv-red);
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(225, 10, 10, 0.4);
     }
 
-    .container {
-      max-width: 1000px;
+    /* CONTAINER & VIEWS */
+    .page-pad {
       width: 100%;
-      margin: 24px auto;
-      padding: 0 16px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
       flex: 1;
     }
 
@@ -114,410 +158,194 @@
       display: block;
     }
 
+    /* CARDS */
     .card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
+      background: #FFFFFF;
+      border: 1px solid var(--vv-line);
+      border-radius: 12px;
       padding: 24px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
-      border: 1px solid rgba(0,0,0,0.05);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(60, 16, 83, 0.04);
     }
 
     .card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text-main);
+      color: var(--vv-squid);
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--vv-line);
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    /* Form Fields */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 16px;
+    /* FORM STYLES */
+    .field {
+      margin-bottom: 15px;
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--vv-squid);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .05em;
+      text-transform: uppercase;
     }
 
-    label {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-main);
-    }
-
-    input, select {
+    .field input, .field select, .field textarea {
+      display: block;
       width: 100%;
-      padding: 12px 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background-color: #FAF9F8;
-      font-size: 0.95rem;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1px solid var(--vv-line);
+      border-radius: 8px;
+      background: #FFFFFF;
+      color: var(--vv-body);
       outline: none;
-      transition: all 0.2s ease;
+      font-size: 14px;
+      transition: border-color 0.15s ease;
     }
 
-    input:focus, select:focus {
-      border-color: var(--primary);
-      background-color: white;
-      box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.1);
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: var(--vv-squid);
+      box-shadow: 0 0 0 2px rgba(60, 16, 83, .08);
     }
 
-    /* Buttons */
-    .btn {
-      padding: 12px 20px;
-      border: none;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
+    .grid2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
     }
 
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    /* BUTTONS */
     .btn-primary {
-      background: var(--primary);
-      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 46px;
+      padding: 10px 14px;
+      border: 1px solid var(--vv-red);
+      border-radius: 8px;
+      background: var(--vv-red);
+      color: #FFFFFF;
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+      gap: 8px;
+      transition: background 0.15s ease;
     }
 
     .btn-primary:hover {
-      background: var(--primary-dark);
-      box-shadow: 0 4px 12px rgba(225, 6, 0, 0.3);
+      background: var(--vv-red-dark);
     }
 
     .btn-secondary {
-      background: #E5E5EA;
-      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 8px 16px;
+      border: 1px solid var(--vv-squid);
+      border-radius: 8px;
+      background: #FFFFFF;
+      color: var(--vv-squid);
+      font-size: 12px;
+      font-weight: 800;
+      gap: 6px;
     }
 
-    /* Table */
+    .btn-secondary:hover {
+      background: rgba(60, 16, 83, .04);
+    }
+
+    /* TABLES */
     .table-container {
       overflow-x: auto;
+      margin-top: 10px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.9rem;
+      font-size: 13px;
     }
 
     th {
-      background: #FAF9F8;
-      padding: 12px 16px;
-      font-weight: 600;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
+      background: var(--vv-bg);
+      padding: 12px;
+      font-weight: 800;
+      color: var(--vv-squid);
+      border-bottom: 2px solid var(--vv-line);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
     }
 
     td {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text-main);
+      padding: 12px;
+      border-bottom: 1px solid var(--vv-line);
+      color: var(--vv-body);
     }
 
-    tr:last-child td {
-      border-bottom: none;
+    tr:hover td {
+      background: rgba(60, 16, 83, .01);
     }
 
     .badge {
       display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      background: #E5E5EA;
-      color: var(--text-main);
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      background: var(--status-blue-bg);
+      color: var(--status-blue);
     }
 
-    footer {
+    /* FOOTER */
+    .footer {
+      width: 100%;
+      margin: auto 0 0;
+      padding: 16px 24px;
+      background: #FFFFFF;
+      border-top: 1px solid var(--vv-line);
       text-align: center;
-      padding: 20px;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      border-top: 1px solid var(--border);
-      margin-top: 40px;
+      color: var(--vv-gray);
+      font-size: 11px;
     }
 
-    @media (max-width: 600px) {
-      header {
+    @media (max-width: 768px) {
+      .grid2, .grid3 {
+        grid-template-columns: 1fr;
+      }
+      .band {
         flex-direction: column;
-        gap: 12px;
+        align-items: flex-start;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header Navigation -->
-  <header>
-    <div class="brand">
-      <div class="brand-logo">VIRGIN</div>
-      <div class="brand-title">Culinary Station History</div>
+  <!-- VIRGIN VOYAGES HEADER BAND -->
+  <div class="band">
+    <div>
+      <div class="eyebrow">Virgin Voyages Operations</div>
+      <h1>Culinary Station History Tracker</h1>
     </div>
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('log-entry-view')">
-        <i data-lucide="plus-circle"></i> Add Log Entry
+        <i data-lucide="plus-circle" style="width:14px; height:14px;"></i> Add Entry
       </button>
       <button class="tab-btn" onclick="switchTab('history-view')">
-        <i data-lucide="history"></i> History & Reports
-      </button>
-    </div>
-  </header>
-
-  <div class="container">
-
-    <!-- ADD LOG ENTRY VIEW -->
-    <div id="log-entry-view" class="view active">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <i data-lucide="pen-tool" style="color: var(--primary);"></i> Record Station Work History
-          </div>
-        </div>
-
-        <form id="history-form" onsubmit="saveEntry(event)">
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="cm-id">Crew Member ID</label>
-              <input type="text" id="cm-id" placeholder="e.g. CM-104" required>
-            </div>
-
-            <div class="form-group">
-              <label for="cm-name">Crew Member Name</label>
-              <input type="text" id="cm-name" placeholder="e.g. Chef John Doe" required>
-            </div>
-
-            <div class="form-group">
-              <label for="cm-position">Position / Role</label>
-              <input type="text" id="cm-position" placeholder="e.g. Sous Chef, Line Cook" required>
-            </div>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="venue-name">Venue / Location</label>
-              <input type="text" id="venue-name" placeholder="e.g. Grand Ballroom Kitchen" required>
-            </div>
-
-            <div class="form-group">
-              <label for="station-worked">Station Worked</label>
-              <input type="text" id="station-worked" placeholder="e.g. Grill #1, Pastry, Expo" required>
-            </div>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label for="from-date">From Date</label>
-              <input type="date" id="from-date" required>
-            </div>
-
-            <div class="form-group">
-              <label for="to-date">To Date</label>
-              <input type="date" id="to-date" required>
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
-            <i data-lucide="save"></i> Save Work History Record
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <!-- HISTORY & AUDIT LOG VIEW -->
-    <div id="history-view" class="view">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">
-            <i data-lucide="file-text" style="color: var(--primary);"></i> Complete Crew Station Ledger
-          </div>
-          <button class="btn btn-secondary" onclick="exportToCSV()" style="font-size: 0.85rem;">
-            <i data-lucide="download"></i> Export CSV
-          </button>
-        </div>
-
-        <!-- Filter Search Bar -->
-        <div style="margin-bottom: 16px;">
-          <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Search by CM Name, ID, Venue, or Station...">
-        </div>
-
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>CM ID</th>
-                <th>Name</th>
-                <th>Position</th>
-                <th>Venue</th>
-                <th>Station Worked</th>
-                <th>From Date</th>
-                <th>To Date</th>
-              </tr>
-            </thead>
-            <tbody id="master-history-table">
-              <!-- Populated dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <footer>
-    Virgin Culinary Operations &copy; 2026 | Station History Ledger
-  </footer>
-
-  <script>
-    // Initial sample historical data
-    let historyLogs = JSON.parse(localStorage.getItem('culinary_history_logs')) || [
-      {
-        id: "REC-1001",
-        cm_id: "CM-101",
-        cm_name: "Marcus Vance",
-        position: "Sous Chef",
-        venue: "Grand Ballroom Kitchen",
-        station: "Expeditor / Pass",
-        from_date: "2026-10-01",
-        to_date: "2026-10-05"
-      },
-      {
-        id: "REC-1002",
-        cm_id: "CM-102",
-        cm_name: "John Doe",
-        position: "Line Cook",
-        venue: "Downtown Main Line",
-        station: "Hot Line - Grill #1",
-        from_date: "2026-09-20",
-        to_date: "2026-09-28"
-      },
-      {
-        id: "REC-1003",
-        cm_id: "CM-103",
-        cm_name: "Maria Rodriguez",
-        position: "Pastry Chef",
-        venue: "Waterfront Pavilion",
-        station: "Pastry & Desserts",
-        from_date: "2026-09-15",
-        to_date: "2026-09-19"
-      }
-    ];
-
-    window.onload = function() {
-      lucide.createIcons();
-      renderHistoryTable();
-      
-      // Set default dates in form to today
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('from-date').value = today;
-      document.getElementById('to-date').value = today;
-    };
-
-    function switchTab(tabId) {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      
-      document.getElementById(tabId).classList.add('active');
-      event.currentTarget.classList.add('active');
-
-      if (tabId === 'history-view') {
-        renderHistoryTable();
-      }
-    }
-
-    function saveEntry(e) {
-      e.preventDefault();
-
-      const newRecord = {
-        id: "REC-" + Math.floor(1000 + Math.random() * 9000),
-        cm_id: document.getElementById('cm-id').value,
-        cm_name: document.getElementById('cm-name').value,
-        position: document.getElementById('cm-position').value,
-        venue: document.getElementById('venue-name').value,
-        station: document.getElementById('station-worked').value,
-        from_date: document.getElementById('from-date').value,
-        to_date: document.getElementById('to-date').value
-      };
-
-      historyLogs.unshift(newRecord);
-      localStorage.setItem('culinary_history_logs', JSON.stringify(historyLogs));
-
-      // Reset Form
-      document.getElementById('history-form').reset();
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('from-date').value = today;
-      document.getElementById('to-date').value = today;
-
-      alert('Work History Record Saved Successfully!');
-      switchTab('history-view');
-    }
-
-    function renderHistoryTable() {
-      const tableBody = document.getElementById('master-history-table');
-      tableBody.innerHTML = '';
-
-      if (historyLogs.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#999;">No historical work records found.</td></tr>';
-        return;
-      }
-
-      historyLogs.forEach(log => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><strong>${log.cm_id}</strong></td>
-          <td>${log.cm_name}</td>
-          <td><span class="badge">${log.position}</span></td>
-          <td>${log.venue}</td>
-          <td>${log.station}</td>
-          <td>${log.from_date}</td>
-          <td>${log.to_date}</td>
-        `;
-        tableBody.appendChild(tr);
-      });
-    }
-
-    function filterTable() {
-      const query = document.getElementById('search-input').value.toLowerCase();
-      const rows = document.querySelectorAll('#master-history-table tr');
-
-      rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(query) ? '' : 'none';
-      });
-    }
-
-    function exportToCSV() {
-      let csv = 'Record ID,CM ID,CM Name,Position,Venue,Station Worked,From Date,To Date\n';
-      historyLogs.forEach(r => {
-        csv += `"${r.id}","${r.cm_id}","${r.cm_name}","${r.position}","${r.venue}","${r.station}","${r.from_date}","${r.to_date}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.setAttribute('href', url);
-      a.setAttribute('download', `Virgin_Culinary_Work_History_${new Date().toISOString().slice(0,10)}.csv`);
-      a.click();
-    }
-  </script>
-</body>
-</html>
