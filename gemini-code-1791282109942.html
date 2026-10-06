@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virgin Culinary Crew - Station Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    :root {
+      --primary: #E10600;
+      --primary-dark: #B30000;
+      --primary-light: #FF3B30;
+      --dark-bg: #121212;
+      --card-bg: #ffffff;
+      --text-main: #1C1C1E;
+      --text-muted: #6E6E73;
+      --border: #E5E5EA;
+      --bg-gray: #F2F2F7;
+      --success: #34C759;
+      --warning: #FF9500;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-gray);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Virgin Header */
+    header {
+      background-color: #000000;
+      color: white;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 4px solid var(--primary);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      background: var(--primary);
+      color: white;
+      font-weight: 900;
+      font-style: italic;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 1.2rem;
+      letter-spacing: -0.5px;
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 4px;
+      border-radius: 30px;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: #ccc;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 2px 8px rgba(225, 6, 0, 0.4);
+    }
+
+    .container {
+      max-width: 1000px;
+      width: 100%;
+      margin: 24px auto;
+      padding: 0 16px;
+      flex: 1;
+    }
+
+    /* Views */
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Status Banner */
+    .status-banner {
+      background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
+      color: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+      border-left: 6px solid var(--primary);
+    }
+
+    .status-banner.active-shift {
+      border-left-color: var(--success);
+    }
+
+    .status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-off {
+      background: rgba(255,255,255,0.15);
+      color: #ccc;
+    }
+
+    .badge-on {
+      background: rgba(52, 199, 89, 0.2);
+      color: #34C759;
+      border: 1px solid rgba(52, 199, 89, 0.4);
+    }
+
+    .timer {
+      font-size: 2rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: #ffffff;
+      margin: 8px 0;
+    }
+
+    .shift-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .detail-label {
+      font-size: 0.75rem;
+      color: #a1a1a6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .detail-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background-color: #FAF9F8;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--primary);
+      background-color: white;
+      box-shadow: 0 0 0 3px rgba(225, 6, 0, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      box-shadow: 0 4px 12px rgba(225, 6, 0, 0.3);
+    }
+
+    .btn-secondary {
+      background: #E5E5EA;
+      color: var(--text-main);
+    }
+
+    .btn-danger {
+      background: #FF3B30;
+      color: white;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    /* Data Tables */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #FAF9F8;
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-main);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge-active {
+      background: #E8F8EE;
+      color: #1E7E34;
+    }
+
+    .badge-completed {
+      background: #E5E5EA;
+      color: #6E6E73;
+    }
+
+    /* Admin Floorboard Grid */
+    .floorboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .station-card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .station-card.occupied {
+      border-left: 4px solid var(--success);
+    }
+
+    .station-card.empty {
+      border-left: 4px solid var(--warning);
+      background: #FFFDF9;
+    }
+
+    .station-name {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .station-status {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .cm-assigned {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 40px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      header {
+        flex-direction: column;
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">VIRGIN</div>
+      <div class="brand-title">Culinary Crew Tracker</div>
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('cm-view')">
+        <i data-lucide="user"></i> Crew Portal
+      </button>
+      <button class="tab-btn" onclick="switchTab('admin-view')">
+        <i data-lucide="layout-dashboard"></i> Admin Dashboard
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- CREW MEMBER PORTAL -->
+    <div id="cm-view" class="view active">
+      
+      <!-- CM Identity Switcher -->
+      <div class="card" style="padding: 16px;">
+        <div class="form-row" style="align-items: center;">
+          <div class="form-group" style="margin: 0;">
+            <label for="cm-select">Logged in Crew Member:</label>
+            <select id="cm-select" onchange="changeCrewMember()">
+              <!-- Populated dynamically -->
+            </select>
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); text-align: right;">
+            ID: <span id="cm-id-display" style="font-weight: bold; color: var(--text-main);">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Shift Banner -->
+      <div id="status-banner" class="status-banner">
+        <div class="status-header">
+          <span class="status-badge badge-off" id="shift-status-badge">Off Shift</span>
+          <span id="shift-date-display" style="font-size: 0.8rem; color: #aaa;"></span>
+        </div>
+        <div class="timer" id="shift-timer">00:00:00</div>
+        
+        <div id="active-shift-info" style="display: none;" class="shift-details">
+          <div class="detail-item">
+            <span class="detail-label">Current Venue</span>
+            <span class="detail-value" id="active-venue">--</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Station</span>
+            <span class="detail-value" id="active-station">--</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Checked-In Since</span>
+            <span class="detail-value" id="active-start-time">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Station Check-In / Switch Form -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <i data-lucide="map-pin" style="color: var(--primary);"></i> Station Check-In
+          </div>
+        </div>
+
+        <form id="checkin-form" onsubmit="handleCheckIn(event)">
+          <div class="form-group">
+            <label for="venue-select">Select Venue / Location</label>
+            <select id="venue-select" onchange="updateStationOptions()" required>
+              <option value="">-- Choose Venue --</option>
+              <option value="Grand Ballroom Kitchen">Grand Ballroom Kitchen</option>
+              <option value="Downtown Main Line">Downtown Main Line</option>
+              <option value="Waterfront Pavilion">Waterfront Pavilion</option>
+              <option value="Executive Lounge">Executive Lounge</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="station-select">Select Station</label>
+            <select id="station-select" required>
+              <option value="">-- Choose Venue First --</option>
+            </select>
+          </div>
+
+          <div class="btn-group">
+            <button type="submit" id="checkin-btn" class="btn btn-primary">
+              <i data-lucide="play-circle"></i> Start Station Shift
+            </button>
+            <button type="button" id="clockout-btn" class="btn btn-danger" onclick="clockOut()" style="display: none;">
+              <i data-lucide="stop-circle"></i> End Shift / Clock Out
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- History Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <i data-lucide="history"></i> Personal Shift History
+          </div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Venue</th>
+                <th>Station</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="cm-history-table">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ADMIN DASHBOARD PORTAL -->
+    <div id="admin-view" class="view">
+      
+      <!-- Live Station Floorboard -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <i data-lucide="grid" style="color: var(--primary);"></i> Live Kitchen Floorboard
+          </div>
+          <div>
+            <select id="admin-venue-filter" onchange="renderFloorboard()" style="width: auto; padding: 6px 12px;">
+              <option value="Grand Ballroom Kitchen">Grand Ballroom Kitchen</option>
+              <option value="Downtown Main Line">Downtown Main Line</option>
+              <option value="Waterfront Pavilion">Waterfront Pavilion</option>
+              <option value="Executive Lounge">Executive Lounge</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="floorboard-grid" class="floorboard-grid">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Master Assignment Audit Log -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <i data-lucide="file-text"></i> Master Station Log & Audit
+          </div>
+          <button class="btn btn-secondary" onclick="exportToCSV()" style="width: auto; padding: 8px 16px; font-size: 0.85rem;">
+            <i data-lucide="download"></i> Export CSV
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>CM ID</th>
+                <th>Name</th>
+                <th>Venue</th>
+                <th>Station</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="admin-master-table">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>
+    Virgin Culinary Operations &copy; 2026 | Real-time Crew Tracking System
+  </footer>
+
+  <script>
+    // --- DATA & INITIAL STATE ---
+    const venuesWithStations = {
+      "Grand Ballroom Kitchen": ["Grill #1", "Sauté & Sauces", "Pastry / Plating", "Expeditor", "Prep Station"],
+      "Downtown Main Line": ["Hot Line - Grill", "Hot Line - Fry", "Garde Manger", "Pastry", "Pass / Expo"],
+      "Waterfront Pavilion": ["Outdoor Grill", "Bar Bites Prep", "Service Station"],
+      "Executive Lounge": ["Cold Prep", "Plating & Expo", "Beverage Bar"]
+    };
+
+    let crewMembers = [
+      { id: "CM-101", name: "Chef Marcus Vance", title: "Sous Chef" },
+      { id: "CM-102", name: "John Doe", title: "Line Cook" },
+      { id: "CM-103", name: "Maria Rodriguez", title: "Pastry Chef" },
+      { id: "CM-104", name: "Alex Chen", title: "Prep Cook" },
+      { id: "CM-105", name: "Sarah Jenkins", title: "Expeditor" }
+    ];
+
+    let assignments = JSON.parse(localStorage.getItem('culinary_assignments')) || [
+      {
+        id: "ASG-1001",
+        cm_id: "CM-102",
+        cm_name: "John Doe",
+        venue: "Downtown Main Line",
+        station: "Hot Line - Grill",
+        start_time: new Date(Date.now() - 3600000 * 2.5).toISOString(),
+        end_time: null,
+        status: "Active"
+      },
+      {
+        id: "ASG-1002",
+        cm_id: "CM-103",
+        cm_name: "Maria Rodriguez",
+        venue: "Grand Ballroom Kitchen",
+        station: "Pastry / Plating",
+        start_time: new Date(Date.now() - 3600000 * 5).toISOString(),
+        end_time: null,
+        status: "Active"
+      }
+    ];
+
+    let currentCmId = "CM-102";
+    let timerInterval = null;
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      lucide.createIcons();
+      populateCmDropdown();
+      updateStationOptions();
+      renderCmPortal();
+      renderAdminDashboard();
+      startTimer();
+    };
+
+    // --- TAB SWITCHING ---
+    function switchTab(tabId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      if(tabId === 'admin-view') {
+        renderAdminDashboard();
+      }
+    }
+
+    // --- CREW MEMBER SELECTION ---
+    function populateCmDropdown() {
+      const select = document.getElementById('cm-select');
+      select.innerHTML = '';
+      crewMembers.forEach(cm => {
+        const opt = document.createElement('option');
+        opt.value = cm.id;
+        opt.textContent = `${cm.name} (${cm.title})`;
+        select.appendChild(opt);
+      });
+      select.value = currentCmId;
+      document.getElementById('cm-id-display').textContent = currentCmId;
+    }
+
+    function changeCrewMember() {
+      currentCmId = document.getElementById('cm-select').value;
+      document.getElementById('cm-id-display').textContent = currentCmId;
+      renderCmPortal();
+    }
+
+    function updateStationOptions() {
+      const venue = document.getElementById('venue-select').value;
+      const stationSelect = document.getElementById('station-select');
+      stationSelect.innerHTML = '';
+
+      if (!venue || !venuesWithStations[venue]) {
+        stationSelect.innerHTML = '<option value="">-- Choose Venue First --</option>';
+        return;
+      }
+
+      venuesWithStations[venue].forEach(st => {
+        const opt = document.createElement('option');
+        opt.value = st;
+        opt.textContent = st;
+        stationSelect.appendChild(opt);
+      });
+    }
+
+    // --- RENDER FUNCTIONS ---
+    function renderCmPortal() {
+      const activeShift = assignments.find(a => a.cm_id === currentCmId && a.status === 'Active');
+      const banner = document.getElementById('status-banner');
+      const badge = document.getElementById('shift-status-badge');
+      const activeInfo = document.getElementById('active-shift-info');
+      const clockoutBtn = document.getElementById('clockout-btn');
+      const checkinBtn = document.getElementById('checkin-btn');
+
+      if (activeShift) {
+        banner.classList.add('active-shift');
+        badge.textContent = "Currently On Duty";
+        badge.className = "status-badge badge-on";
+        activeInfo.style.display = "grid";
+        clockoutBtn.style.display = "flex";
+        checkinBtn.innerHTML = '<i data-lucide="refresh-cw"></i> Switch Station';
+
+        document.getElementById('active-venue').textContent = activeShift.venue;
+        document.getElementById('active-station').textContent = activeShift.station;
+        document.getElementById('active-start-time').textContent = new Date(activeShift.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else {
+        banner.classList.remove('active-shift');
+        badge.textContent = "Off Shift";
+        badge.className = "status-badge badge-off";
+        activeInfo.style.display = "none";
+        clockoutBtn.style.display = "none";
+        checkinBtn.innerHTML = '<i data-lucide="play-circle"></i> Start Station Shift';
+        document.getElementById('shift-timer').textContent = "00:00:00";
+      }
+
+      // Render History Table
+      const historyTable = document.getElementById('cm-history-table');
+      const cmLogs = assignments.filter(a => a.cm_id === currentCmId).reverse();
+      historyTable.innerHTML = '';
+
+      if (cmLogs.length === 0) {
+        historyTable.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">No previous station logs found.</td></tr>';
+      } else {
+        cmLogs.forEach(log => {
+          const tr = document.createElement('tr');
+          const startStr = new Date(log.start_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+          const endStr = log.end_time ? new Date(log.end_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Active';
+          const statusBadge = log.status === 'Active' ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-completed">Completed</span>';
+
+          tr.innerHTML = `
+            <td>${log.venue}</td>
+            <td>${log.station}</td>
+            <td>${startStr}</td>
+            <td>${endStr}</td>
+            <td>${statusBadge}</td>
+          `;
+          historyTable.appendChild(tr);
+        });
+      }
+      lucide.createIcons();
+    }
+
+    // --- CHECK IN / CLOCK OUT HANDLERS ---
+    function handleCheckIn(e) {
+      e.preventDefault();
+      const venue = document.getElementById('venue-select').value;
+      const station = document.getElementById('station-select').value;
+      const cm = crewMembers.find(c => c.id === currentCmId);
+
+      if (!venue || !station) return;
+
+      // Close previous active shift if switching
+      const existingShift = assignments.find(a => a.cm_id === currentCmId && a.status === 'Active');
+      if (existingShift) {
+        existingShift.end_time = new Date().toISOString();
+        existingShift.status = 'Completed';
+      }
+
+      // Create new shift
+      const newShift = {
+        id: "ASG-" + Math.floor(1000 + Math.random() * 9000),
+        cm_id: cm.id,
+        cm_name: cm.name,
+        venue: venue,
+        station: station,
+        start_time: new Date().toISOString(),
+        end_time: null,
+        status: "Active"
+      };
+
+      assignments.push(newShift);
+      saveData();
+      renderCmPortal();
+    }
+
+    function clockOut() {
+      const activeShift = assignments.find(a => a.cm_id === currentCmId && a.status === 'Active');
+      if (activeShift) {
+        activeShift.end_time = new Date().toISOString();
+        activeShift.status = 'Completed';
+        saveData();
+        renderCmPortal();
+      }
+    }
+
+    // --- TIMER LOGIC ---
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      
+      timerInterval = setInterval(() => {
+        const activeShift = assignments.find(a => a.cm_id === currentCmId && a.status === 'Active');
+        if (activeShift) {
+          const diffMs = Date.now() - new Date(activeShift.start_time).getTime();
+          const hrs = Math.floor(diffMs / 3600000).toString().padStart(2, '0');
+          const mins = Math.floor((diffMs % 3600000) / 60000).toString().padStart(2, '0');
+          const secs = Math.floor((diffMs % 60000) / 1000).toString().padStart(2, '0');
+          document.getElementById('shift-timer').textContent = `${hrs}:${mins}:${secs}`;
+        }
+      }, 1000);
+    }
+
+    // --- ADMIN FUNCTIONS ---
+    function renderAdminDashboard() {
+      renderFloorboard();
+      renderMasterTable();
+    }
+
+    function renderFloorboard() {
+      const selectedVenue = document.getElementById('admin-venue-filter').value;
+      const stations = venuesWithStations[selectedVenue] || [];
+      const grid = document.getElementById('floorboard-grid');
+      grid.innerHTML = '';
+
+      stations.forEach(st => {
+        const activeLog = assignments.find(a => a.venue === selectedVenue && a.station === st && a.status === 'Active');
+        const card = document.createElement('div');
+        
+        if (activeLog) {
+          card.className = "station-card occupied";
+          card.innerHTML = `
+            <div class="station-name">${st}</div>
+            <div class="station-status" style="color: var(--success); font-weight:600;">🟢 OCCUPIED</div>
+            <div class="cm-assigned"><i data-lucide="user" style="width:16px;"></i> ${activeLog.cm_name}</div>
+            <div style="font-size:0.75rem; color:#888;">Since: ${new Date(activeLog.start_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+          `;
+        } else {
+          card.className = "station-card empty";
+          card.innerHTML = `
+            <div class="station-name">${st}</div>
+            <div class="station-status" style="color: var(--warning); font-weight:600;">⚠️ UNSTAFFED</div>
+            <div style="font-size:0.8rem; color:#aaa; margin-top: auto;">No crew checked-in</div>
+          `;
+        }
+        grid.appendChild(card);
+      });
+      lucide.createIcons();
+    }
+
+    function renderMasterTable() {
+      const masterTable = document.getElementById('admin-master-table');
+      masterTable.innerHTML = '';
+
+      assignments.slice().reverse().forEach(log => {
+        const tr = document.createElement('tr');
+        const startStr = new Date(log.start_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+        const endStr = log.end_time ? new Date(log.end_time).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Active';
+        const badge = log.status === 'Active' ? '<span class="badge badge-active">Active</span>' : '<span class="badge badge-completed">Completed</span>';
+
+        tr.innerHTML = `
+          <td><strong>${log.cm_id}</strong></td>
+          <td>${log.cm_name}</td>
+          <td>${log.venue}</td>
+          <td>${log.station}</td>
+          <td>${startStr}</td>
+          <td>${endStr}</td>
+          <td>${badge}</td>
+        `;
+        masterTable.appendChild(tr);
+      });
+    }
+
+    function exportToCSV() {
+      let csv = 'Assignment ID,CM ID,CM Name,Venue,Station,Start Time,End Time,Status\n';
+      assignments.forEach(a => {
+        csv += `"${a.id}","${a.cm_id}","${a.cm_name}","${a.venue}","${a.station}","${a.start_time}","${a.end_time || ''}","${a.status}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `Virgin_Culinary_Station_Report_${new Date().toISOString().slice(0,10)}.csv`);
+      a.click();
+    }
+
+    function saveData() {
+      localStorage.setItem('culinary_assignments', JSON.stringify(assignments));
+    }
+  </script>
+</body>
+</html>
