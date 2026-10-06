@@ -271,4 +271,304 @@
     /* TABLES */
     .table-container {
       overflow-x: auto;
-      margin-top: 10px
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--vv-bg);
+      padding: 12px;
+      font-weight: 800;
+      color: var(--vv-squid);
+      border-bottom: 2px solid var(--vv-line);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid var(--vv-line);
+      color: var(--vv-body);
+    }
+
+    tr:hover td {
+      background: rgba(60, 16, 83, .01);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      background: var(--status-blue-bg);
+      color: var(--status-blue);
+    }
+
+    /* FOOTER */
+    .footer {
+      width: 100%;
+      margin: auto 0 0;
+      padding: 16px 24px;
+      background: #FFFFFF;
+      border-top: 1px solid var(--vv-line);
+      text-align: center;
+      color: var(--vv-gray);
+      font-size: 11px;
+    }
+
+    @media (max-width: 768px) {
+      .grid2, .grid3 {
+        grid-template-columns: 1fr;
+      }
+      .band {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- VIRGIN VOYAGES HEADER BAND -->
+  <div class="band">
+    <div>
+      <div class="eyebrow">Virgin Voyages Operations</div>
+      <h1>Culinary Station History Tracker</h1>
+    </div>
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('log-entry-view')">
+        ➕ Add Entry
+      </button>
+      <button class="tab-btn" onclick="switchTab('history-view')">
+        📋 History Log
+      </button>
+    </div>
+  </div>
+
+  <div class="page-pad">
+
+    <!-- TAB 1: ADD LOG ENTRY -->
+    <div id="log-entry-view" class="view active">
+      <div class="card">
+        <div class="card-title">
+          ✍️ Record Crew Work History
+        </div>
+
+        <form id="history-form" onsubmit="saveEntry(event)">
+          <div class="grid3">
+            <div class="field">
+              <label for="cm-id">Crew Member ID</label>
+              <input type="text" id="cm-id" placeholder="e.g. CM-104" required>
+            </div>
+
+            <div class="field">
+              <label for="cm-name">Crew Member Name</label>
+              <input type="text" id="cm-name" placeholder="e.g. Chef Marcus Vance" required>
+            </div>
+
+            <div class="field">
+              <label for="cm-position">Position / Title</label>
+              <input type="text" id="cm-position" placeholder="e.g. Sous Chef, Line Cook" required>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="venue-name">Venue / Location</label>
+              <input type="text" id="venue-name" placeholder="e.g. Extra Virgin, The Wake" required>
+            </div>
+
+            <div class="field">
+              <label for="station-worked">Station Worked</label>
+              <input type="text" id="station-worked" placeholder="e.g. Hot Line - Grill #1, Pastry, Expo" required>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div class="field">
+              <label for="from-date">From Date</label>
+              <input type="date" id="from-date" required>
+            </div>
+
+            <div class="field">
+              <label for="to-date">To Date</label>
+              <input type="date" id="to-date" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" style="margin-top: 10px;">
+            💾 Save Work History Record
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 2: HISTORY LEDGER -->
+    <div id="history-view" class="view">
+      <div class="card">
+        <div class="card-title" style="justify-content: space-between;">
+          <span>📄 Master Station Ledger</span>
+          <button class="btn-secondary" onclick="exportToCSV()">
+            📥 Export CSV
+          </button>
+        </div>
+
+        <div class="field" style="margin-top: 10px;">
+          <input type="text" id="search-input" onkeyup="filterTable()" placeholder="Search by CM Name, ID, Venue, or Station...">
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>CM ID</th>
+                <th>Name</th>
+                <th>Position</th>
+                <th>Venue</th>
+                <th>Station Worked</th>
+                <th>From Date</th>
+                <th>To Date</th>
+              </tr>
+            </thead>
+            <tbody id="master-history-table">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Virgin Voyages &copy; 2026 | Culinary Operations Station Tracker
+  </div>
+
+  <script>
+    let historyLogs = JSON.parse(localStorage.getItem('culinary_history_logs')) || [
+      {
+        id: "REC-1001",
+        cm_id: "CM-101",
+        cm_name: "Marcus Vance",
+        position: "Sous Chef",
+        venue: "Extra Virgin",
+        station: "Expeditor / Pass",
+        from_date: "2026-10-01",
+        to_date: "2026-10-05"
+      },
+      {
+        id: "REC-1002",
+        cm_id: "CM-102",
+        cm_name: "John Doe",
+        position: "Line Cook",
+        venue: "The Wake",
+        station: "Grill #1",
+        from_date: "2026-09-20",
+        to_date: "2026-09-28"
+      }
+    ];
+
+    window.onload = function() {
+      renderHistoryTable();
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('from-date').value = today;
+      document.getElementById('to-date').value = today;
+    };
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      if (tabId === 'history-view') {
+        renderHistoryTable();
+      }
+    }
+
+    function saveEntry(e) {
+      e.preventDefault();
+
+      const newRecord = {
+        id: "REC-" + Math.floor(1000 + Math.random() * 9000),
+        cm_id: document.getElementById('cm-id').value,
+        cm_name: document.getElementById('cm-name').value,
+        position: document.getElementById('cm-position').value,
+        venue: document.getElementById('venue-name').value,
+        station: document.getElementById('station-worked').value,
+        from_date: document.getElementById('from-date').value,
+        to_date: document.getElementById('to-date').value
+      };
+
+      historyLogs.unshift(newRecord);
+      localStorage.setItem('culinary_history_logs', JSON.stringify(historyLogs));
+
+      document.getElementById('history-form').reset();
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('from-date').value = today;
+      document.getElementById('to-date').value = today;
+
+      alert('Work History Record Saved Successfully!');
+      switchTab('history-view');
+    }
+
+    function renderHistoryTable() {
+      const tableBody = document.getElementById('master-history-table');
+      if (!tableBody) return;
+      tableBody.innerHTML = '';
+
+      if (historyLogs.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#8A8A8A;">No historical work records found.</td></tr>';
+        return;
+      }
+
+      historyLogs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${log.cm_id}</strong></td>
+          <td>${log.cm_name}</td>
+          <td><span class="badge">${log.position}</span></td>
+          <td>${log.venue}</td>
+          <td>${log.station}</td>
+          <td>${log.from_date}</td>
+          <td>${log.to_date}</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    function filterTable() {
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const rows = document.querySelectorAll('#master-history-table tr');
+
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+      });
+    }
+
+    function exportToCSV() {
+      let csv = 'Record ID,CM ID,CM Name,Position,Venue,Station Worked,From Date,To Date\n';
+      historyLogs.forEach(r => {
+        csv += `"${r.id}","${r.cm_id}","${r.cm_name}","${r.position}","${r.venue}","${r.station}","${r.from_date}","${r.to_date}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `Virgin_Culinary_Work_History_${new Date().toISOString().slice(0,10)}.csv`);
+      a.click();
+    }
+  </script>
+</body>
+</html>
