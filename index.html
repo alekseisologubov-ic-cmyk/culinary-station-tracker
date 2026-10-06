@@ -153,7 +153,7 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
           <div class="field"><label for="position">Position / title</label><input id="position" name="position" list="dl-positions" placeholder="e.g. Sous Chef" autocomplete="off"><div class="err"></div></div>
         </div>
         <div class="grid g2">
-          <div class="field"><label for="venue">Venue</label><input id="venue" name="venue" list="dl-venues" placeholder="e.g. Extra Virgin" autocomplete="off"><div class="err"></div></div>
+          <div class="field"><label for="venue">Venue</label><select id="venue" name="venue"></select><div class="err"></div></div>
           <div class="field"><label for="station">Station worked</label><input id="station" name="station" list="dl-stations" placeholder="e.g. Grill #1" autocomplete="off"><div class="err"></div></div>
         </div>
         <div class="grid g2">
@@ -163,7 +163,6 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
         <label class="check"><input type="checkbox" id="ongoing"> Still working this station (no end date)</label>
 
         <datalist id="dl-positions"></datalist>
-        <datalist id="dl-venues"></datalist>
         <datalist id="dl-stations"></datalist>
 
         <div class="grid g2">
@@ -215,6 +214,16 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
    ===================================================================== */
 const CONFIG = {
   storageKey: 'vv_culinary_history_v2',
+  // Source: Station_Budget_proposal.xlsx ("By Location"). "… Night" rows are the
+  // night shift of the same venue, so they are merged into one venue name.
+  venues: [
+    'Culinary Leadership','Extra Virgin','The Wake','Test Kitchen','Razzle Dazzle',
+    'Pink Agave','Gunbae','The Dock','The Social Club','The Galley','Dine & Dash',
+    "Let's Taco 'bout it",'The Daily Mix','Noodle Around','Burger Bar','Hot of The Press',
+    'Bento Baby','Well Bread & Sweet Side','The Pizza Place','Sun Club','Ship Eats',
+    'Butchery','Fish Room','Vegetable Prep','Garde Manger','Main Pastry','Bakery',
+    'The Kitchen Table','The Manor',
+  ],
   openEndDate: '9999-12-31',           // sentinel used for overlap maths
   columns: [                            // drives the table header, sorting and CSV
     { key: 'cm_id',     label: 'CM ID' },
@@ -299,6 +308,9 @@ const Store = {
       else if (v && rule.max && v.length > rule.max) errors[key] = `Max ${rule.max} characters.`;
       else if (v && rule.pattern && !rule.pattern.test(v)) errors[key] = rule.patternMsg;
     }
+    const v = (data.venue || '').trim();
+    if (v && !CONFIG.venues.includes(v) && !this.records.some(r => r.id === this.ui.editingId && r.venue === v))
+      errors.venue = 'Choose a venue from the list.';
     if (data.from_date && data.to_date && data.to_date < data.from_date)
       errors.to_date = 'End date cannot be before the start date.';
     return errors;
@@ -400,13 +412,27 @@ const View = {
   renderLists() {
     const fill = (id, vals) => this.$(id).replaceChildren(...vals.map(v => Utils.el('option', { value: v })));
     fill('dl-positions', Utils.uniq(Store.records.map(r => r.position)));
-    fill('dl-venues',    Utils.uniq(Store.records.map(r => r.venue)));
     fill('dl-stations',  Utils.uniq(Store.records.map(r => r.station)));
 
     const sel = this.$('venue-filter'), cur = Store.ui.venue;
     sel.replaceChildren(Utils.el('option', { value: '' }, 'All venues'),
-      ...Utils.uniq(Store.records.map(r => r.venue)).map(v => Utils.el('option', { value: v }, v)));
+      ...this.venueList().map(v => Utils.el('option', { value: v }, v)));
     sel.value = cur;
+    this.renderVenueSelect();
+  },
+
+  // Official list first, plus any legacy venue already saved in records
+  venueList() {
+    const legacy = Store.records.map(r => r.venue).filter(v => v && !CONFIG.venues.includes(v));
+    return [...CONFIG.venues, ...Utils.uniq(legacy)];
+  },
+  renderVenueSelect(selected = this.$('venue').value) {
+    const sel = this.$('venue');
+    const list = this.venueList();
+    if (selected && !list.includes(selected)) list.push(selected);
+    sel.replaceChildren(Utils.el('option', { value: '' }, 'Select venue…'),
+      ...list.map(v => Utils.el('option', { value: v }, v)));
+    sel.value = selected;
   },
 
   renderHead() {
@@ -467,7 +493,7 @@ const View = {
   },
   showErrors(errors) {
     document.querySelectorAll('#entry-form .field').forEach(f => {
-      const input = f.querySelector('input'); const msg = errors[input?.name];
+      const input = f.querySelector('input, select'); const msg = errors[input?.name];
       f.classList.toggle('invalid', !!msg);
       const e = f.querySelector('.err'); if (e) e.textContent = msg || '';
     });
@@ -476,6 +502,7 @@ const View = {
   },
   resetForm() {
     this.$('entry-form').reset();
+    this.renderVenueSelect('');
     this.$('from_date').value = Utils.today();
     this.$('to_date').disabled = false;
     this.$('form-title').textContent = 'Record crew work history';
@@ -485,7 +512,8 @@ const View = {
   },
   fillForm(r) {
     const f = this.$('entry-form');
-    Object.keys(CONFIG.fields).forEach(k => (f.elements[k].value = r[k] || ''));
+    this.renderVenueSelect(r.venue);
+    Object.keys(CONFIG.fields).filter(k => k !== 'venue').forEach(k => (f.elements[k].value = r[k] || ''));
     this.$('ongoing').checked = !r.to_date;
     this.$('to_date').disabled = !r.to_date;
     this.$('form-title').textContent = `Editing ${r.cm_name}`;
