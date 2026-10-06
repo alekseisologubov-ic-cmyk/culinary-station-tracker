@@ -130,13 +130,14 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
   </div>
   <div class="tabs" role="tablist" aria-label="Sections">
     <button class="tab" role="tab" id="tab-entry"   aria-controls="view-entry"   aria-selected="true">Add entry</button>
-    <button class="tab" role="tab" id="tab-history" aria-controls="view-history" aria-selected="false">History log</button>
+    <button class="tab" role="tab" id="tab-history" aria-controls="view-history" aria-selected="false" hidden>History log</button>
+    <button class="tab" type="button" id="admin-btn">Admin login</button>
   </div>
 </header>
 
 <main>
   <!-- Summary cards (always visible) -->
-  <section class="stats" aria-label="Summary">
+  <section class="stats" id="stats" aria-label="Summary" hidden>
     <div class="stat"><div class="lbl">Total records</div><div class="num" id="stat-total">0</div><div class="cap">All station assignments logged</div></div>
     <div class="stat"><div class="lbl">Currently working</div><div class="num" id="stat-active">0</div><div class="cap">Crew with an open or current assignment</div></div>
     <div class="stat"><div class="lbl">Venues covered</div><div class="num" id="stat-venues">0</div><div class="cap">Distinct venues in the log</div></div>
@@ -173,7 +174,25 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
     </div>
   </section>
 
-  <!-- VIEW 2: LEDGER -->
+  <!-- VIEW: ADMIN LOGIN -->
+  <section class="view" id="view-login" hidden>
+    <div class="card" style="max-width:420px;margin:0 auto">
+      <h2><span>Admin access</span></h2>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="admin-pin">Admin passcode</label>
+          <input type="password" id="admin-pin" autocomplete="off">
+          <div class="err" id="login-err"></div>
+        </div>
+        <div class="grid g2">
+          <button type="submit" class="btn block">Unlock</button>
+          <button type="button" class="btn ghost block" id="login-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- VIEW 2: LEDGER (admin only) -->
   <section class="view" id="view-history" role="tabpanel" aria-labelledby="tab-history" hidden>
     <div class="callout" id="conflict-callout" hidden>
       <div class="eyebrow">Read this twice</div>
@@ -214,6 +233,7 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
    ===================================================================== */
 const CONFIG = {
   storageKey: 'vv_culinary_history_v2',
+  adminPin: 'VV-admin-2026',   // CHANGE THIS before sharing the file
   // Source: Station_Budget_proposal.xlsx ("By Location"). "… Night" rows are the
   // night shift of the same venue, so they are merged into one venue name.
   venues: [
@@ -243,10 +263,6 @@ const CONFIG = {
     from_date: { label: 'From date',      required: true },
     to_date:   { label: 'To date',        required: false },
   },
-  seed: [
-    { cm_id:'CM-101', cm_name:'Marcus Vance', position:'Sous Chef', venue:'Extra Virgin', station:'Expeditor / Pass', from_date:'2026-10-01', to_date:'2026-10-05' },
-    { cm_id:'CM-102', cm_name:'John Doe',     position:'Line Cook', venue:'The Wake',     station:'Grill #1',         from_date:'2026-09-20', to_date:'2026-09-28' },
-  ],
 };
 
 /* =====================================================================
@@ -259,7 +275,7 @@ const Storage = {
       const raw = localStorage.getItem(CONFIG.storageKey);
       if (raw) return JSON.parse(raw);
     } catch (e) { console.warn('Storage read failed', e); }
-    return CONFIG.seed.map(r => ({ id: Utils.uid(), ...r }));
+    return [];
   },
   save(records) {
     try { localStorage.setItem(CONFIG.storageKey, JSON.stringify(records)); return true; }
@@ -395,11 +411,17 @@ const View = {
   },
 
   switchTab(name) {
-    ['entry', 'history'].forEach(n => {
+    ['entry', 'history', 'login'].forEach(n => {
       const on = n === name;
       this.$('view-' + n).hidden = !on;
-      this.$('tab-' + n).setAttribute('aria-selected', on);
+      this.$('tab-' + n)?.setAttribute('aria-selected', on);
     });
+  },
+
+  setAdminUI(on) {
+    this.$('tab-history').hidden = !on;
+    this.$('stats').hidden = !on;
+    this.$('admin-btn').textContent = on ? 'Log out' : 'Admin login';
   },
 
   renderStats() {
@@ -528,13 +550,28 @@ const View = {
 const App = {
   init() {
     Store.init();
+    this.admin = false;
+    try { this.admin = sessionStorage.getItem('vv_admin') === '1'; } catch (e) {}
     View.resetForm();
     View.renderAll();
+    View.setAdminUI(this.admin);
     View.switchTab('entry');
 
     // tabs
     View.$('tab-entry').addEventListener('click', () => View.switchTab('entry'));
-    View.$('tab-history').addEventListener('click', () => { View.renderAll(); View.switchTab('history'); });
+    View.$('tab-history').addEventListener('click', () => { if (!this.admin) return; View.renderAll(); View.switchTab('history'); });
+
+    // admin login / logout
+    View.$('admin-btn').addEventListener('click', () => {
+      if (this.admin) this.setAdmin(false);
+      else { View.$('admin-pin').value = ''; View.$('login-err').textContent = ''; View.switchTab('login'); View.$('admin-pin').focus(); }
+    });
+    View.$('login-cancel').addEventListener('click', () => View.switchTab('entry'));
+    View.$('login-form').addEventListener('submit', e => {
+      e.preventDefault();
+      if (View.$('admin-pin').value === CONFIG.adminPin) { this.setAdmin(true); View.switchTab('history'); }
+      else View.$('login-err').textContent = 'Incorrect passcode.';
+    });
 
     // form
     View.$('entry-form').addEventListener('submit', e => { e.preventDefault(); this.submit(); });
@@ -556,6 +593,7 @@ const App = {
 
     // row actions (edit / two-step delete)
     View.$('tbody').addEventListener('click', e => {
+      if (!this.admin) return;
       const edit = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
       if (edit) {
         const r = Store.records.find(x => x.id === edit.dataset.edit); if (!r) return;
@@ -575,15 +613,25 @@ const App = {
     });
   },
 
+  setAdmin(on) {
+    this.admin = on;
+    try { sessionStorage.setItem('vv_admin', on ? '1' : '0'); } catch (e) {}
+    View.setAdminUI(on);
+    if (on) View.renderAll();
+    else { Store.ui.editingId = null; View.resetForm(); View.switchTab('entry'); }
+  },
+
   submit() {
     const data = View.readForm();
     const errors = Store.validate(data);
     View.showErrors(errors);
     if (Object.keys(errors).length) return;
 
+    if (!this.admin) Store.ui.editingId = null;   // only admins can edit existing records
     const wasEdit = !!Store.ui.editingId;
     const ok = Store.upsert(data);
-    View.resetForm(); View.renderAll(); View.switchTab('history');
+    View.resetForm(); View.renderAll();
+    if (this.admin) View.switchTab('history');     // everyone else stays on the form
     View.toast(ok ? (wasEdit ? 'Record updated.' : 'Record saved.')
                   : 'Saved for this session only — browser storage is unavailable.');
   },
