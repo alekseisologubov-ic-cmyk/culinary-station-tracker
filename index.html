@@ -107,6 +107,24 @@ td.actions{white-space:nowrap;display:flex;gap:6px}
 .badge.live{background:var(--green-bg);color:var(--green)}
 .badge.warn{background:var(--amber-bg);color:var(--amber)}
 .empty{text-align:center;color:var(--muted);padding:28px}
+.link{all:unset;cursor:pointer;font-weight:700;color:var(--squid);text-decoration:underline}
+.link:hover{color:var(--red)}
+
+/* ---- Reports ---- */
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.seg button{border:1px solid var(--squid);background:#fff;color:var(--squid);padding:8px 16px;border-radius:999px;font:800 11px var(--font-head)}
+.seg button[aria-pressed="true"]{background:var(--squid);color:#fff}
+.rep-controls{display:grid;grid-template-columns:minmax(0,420px);margin-bottom:6px}
+.caption{color:var(--muted);font-size:12px;margin:0 0 10px}
+.sub{font:800 12px var(--font-head);letter-spacing:.08em;text-transform:uppercase;color:var(--squid);margin:22px 0 4px}
+.sub::before{content:"— ";color:var(--red)}
+.stats.four{grid-template-columns:repeat(4,1fr)}
+.stat .num.sm{font-size:22px;padding:7px 0}
+.barcell{display:flex;align-items:center;gap:8px;min-width:150px}
+.bartrack{flex:1}
+.barfill{display:block;height:10px;border-radius:5px;background:#D9D4DD;min-width:3px}
+.barfill.top{background:var(--red)}
+td.wide{min-width:240px;max-width:420px}
 
 /* =====================================================================
    6. FOOTER + TOAST
@@ -116,7 +134,7 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--black);color:#fff;padding:12px 20px;border-radius:8px;border-left:4px solid var(--red);box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:10}
 
 @media(max-width:768px){
-  .g2,.g3,.stats,.toolbar{grid-template-columns:1fr}
+  .g2,.g3,.stats,.stats.four,.toolbar{grid-template-columns:1fr}
   .band{flex-direction:column;align-items:flex-start}
 }
 </style>
@@ -131,6 +149,7 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
   <div class="tabs" role="tablist" aria-label="Sections">
     <button class="tab" role="tab" id="tab-entry"   aria-controls="view-entry"   aria-selected="true">Add entry</button>
     <button class="tab" role="tab" id="tab-history" aria-controls="view-history" aria-selected="false" hidden>History log</button>
+    <button class="tab" role="tab" id="tab-reports" aria-controls="view-reports" aria-selected="false" hidden>Reports</button>
     <button class="tab" type="button" id="admin-btn">Admin login</button>
   </div>
 </header>
@@ -216,6 +235,28 @@ footer .pill{background:var(--red);color:#fff;padding:2px 8px;border-radius:999p
       </div>
     </div>
   </section>
+  <!-- VIEW 3: REPORTS (admin only) -->
+  <section class="view" id="view-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
+    <div class="card">
+      <h2>
+        <span>Reports</span>
+        <button class="btn ghost small" id="rep-export" type="button">Export CSV</button>
+      </h2>
+      <div class="seg" id="rep-nav" role="group" aria-label="Report type"></div>
+      <div class="rep-controls">
+        <div class="field" id="ctl-crew">
+          <label for="crew-pick">Crew member</label>
+          <input id="crew-pick" list="dl-crew" placeholder="Type a name or ID, then pick from the list…" autocomplete="off">
+          <datalist id="dl-crew"></datalist>
+        </div>
+        <div class="field" id="ctl-group" hidden>
+          <label for="group-by">Group by</label>
+          <select id="group-by"><option value="station">Venue — station</option><option value="venue">Venue only</option></select>
+        </div>
+      </div>
+      <div id="rep-body"></div>
+    </div>
+  </section>
 </main>
 
 <footer>
@@ -287,6 +328,26 @@ const Storage = {
    C. UTILS
    ===================================================================== */
 const Utils = {
+  realEnd: (r, today = Utils.today()) => r.to_date || today,
+  stationKey: r => `${r.venue} — ${r.station}`,
+  toDay: iso => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 864e5,
+  daysBetween: (a, b) => (b < a ? 0 : Math.round(Utils.toDay(b) - Utils.toDay(a)) + 1),   // inclusive
+  // total days covered by a set of records, counting overlapping days only once
+  mergedDays(list, today = Utils.today()) {
+    const iv = list.map(r => [r.from_date, Utils.realEnd(r, today)]).filter(([a, b]) => a <= b).sort((x, y) => x[0].localeCompare(y[0]));
+    let total = 0, cur = null;
+    for (const [a, b] of iv) {
+      if (cur && a <= cur[1]) { if (b > cur[1]) cur[1] = b; }
+      else { if (cur) total += Utils.daysBetween(cur[0], cur[1]); cur = [a, b]; }
+    }
+    if (cur) total += Utils.daysBetween(cur[0], cur[1]);
+    return total;
+  },
+  fmtDuration(days) {
+    if (days < 30) return `${days} d`;
+    const m = Math.floor(days / 30.4375), y = Math.floor(m / 12), r = m % 12;
+    return y ? (r ? `${y} y ${r} m` : `${y} y`) : `${m} m`;
+  },
   uid: () => (crypto.randomUUID ? crypto.randomUUID() : 'r' + Date.now() + Math.random().toString(16).slice(2)),
   today: () => new Date().toISOString().slice(0, 10),
   end: r => r.to_date || CONFIG.openEndDate,
@@ -386,21 +447,324 @@ const Exporter = {
     if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;          // block formula injection
     return `"${s.replace(/"/g, '""')}"`;                // escape quotes
   },
-  csv(records) {
-    const head = CONFIG.columns.map(c => this.cell(c.label)).join(',');
-    const rows = records.map(r => CONFIG.columns.map(c => this.cell(r[c.key] || (c.key === 'to_date' ? 'Present' : ''))).join(','));
-    return '\ufeff' + [head, ...rows].join('\r\n');     // BOM keeps accents correct
+  fromRows(headers, rows) {
+    const line = a => a.map(c => this.cell(c)).join(',');
+    return '\ufeff' + [line(headers), ...rows.map(line)].join('\r\n');   // BOM keeps accents correct
   },
-  download(records) {
-    const url = URL.createObjectURL(new Blob([this.csv(records)], { type: 'text/csv;charset=utf-8' }));
-    const a = Utils.el('a', { href: url, download: `VV_Culinary_Work_History_${Utils.today()}.csv` });
+  csv(records) {
+    return this.fromRows(CONFIG.columns.map(c => c.label),
+      records.map(r => CONFIG.columns.map(c => r[c.key] || (c.key === 'to_date' ? 'Present' : ''))));
+  },
+  fromDef(def) {                                       // any report definition → CSV
+    return this.fromRows(def.columns.map(c => c.label), def.rows.map((r, i) => def.columns.map(c => c.get(r, i))));
+  },
+  download(text, filename) {
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+    const a = Utils.el('a', { href: url, download: filename });
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   },
 };
 
 /* =====================================================================
-   F. VIEW – pure rendering from state
+   F. REPORTS MODULE – self-contained. Everything report-related lives here.
+      Needs only: Utils, Exporter, and the 4 hooks passed to Reports.init().
+      To split into its own file later, cut this block into reports.js.
+      ADD A REPORT = write one function in Defs + one line in REGISTRY.
+   ===================================================================== */
+const Reports = (() => {
+  const state = { report: 'crew', crewId: '', groupBy: 'station' };
+  let hooks = { getRecords: () => [], getConflicts: () => new Set(), toast: () => {} };
+  const $ = id => document.getElementById(id);
+  const fmt = Utils.fmtDuration;
+  const yrs = d => (d / 365.25).toFixed(1);
+  const pct = (v, max) => (max ? Math.round(v / max * 100) : 0);
+
+  /* ---------- 1. DATA LAYER (pure functions, no DOM – easy to test) ---------- */
+  const Data = {
+    index(records) {                                   // Map<cm_id, records oldest→newest>
+      const m = new Map();
+      [...records].sort((a, b) => a.from_date.localeCompare(b.from_date))
+        .forEach(r => { if (!m.has(r.cm_id)) m.set(r.cm_id, []); m.get(r.cm_id).push(r); });
+      return m;
+    },
+
+    summarize(list, today = Utils.today()) {          // one crew member → headline numbers
+      const sorted = [...list].sort((a, b) => a.from_date.localeCompare(b.from_date));
+      const latest = sorted[sorted.length - 1];
+      const first = sorted[0].from_date;
+      const lastEnd = sorted.map(r => Utils.realEnd(r, today)).sort().pop();
+      const stations = new Set(sorted.map(Utils.stationKey));
+      return {
+        cm_id: latest.cm_id, cm_name: latest.cm_name, position: latest.position,
+        first, lastEnd,
+        tenureDays: Utils.daysBetween(first, lastEnd),
+        workedDays: Utils.mergedDays(sorted, today),
+        stations: [...stations], stationCount: stations.size,
+        venueCount: new Set(sorted.map(r => r.venue)).size,
+        active: sorted.some(r => Utils.isActive(r, today)),
+        records: sorted,
+      };
+    },
+
+    breakdown(list, today = Utils.today()) {         // one crew member → time per station
+      const m = new Map();
+      list.forEach(r => {
+        const k = Utils.stationKey(r), end = Utils.realEnd(r, today);
+        const g = m.get(k) || { venue: r.venue, station: r.station, times: 0, days: 0, first: r.from_date, last: '', current: false };
+        g.times++;
+        g.days += Utils.daysBetween(r.from_date, end);
+        if (r.from_date < g.first) g.first = r.from_date;
+        if (end > g.last) g.last = end;
+        if (Utils.isActive(r, today)) g.current = true;
+        m.set(k, g);
+      });
+      return [...m.values()].sort((a, b) => b.days - a.days);
+    },
+
+    byStation(records, groupBy, today = Utils.today()) {   // all crew → per station / venue
+      const m = new Map();
+      records.forEach(r => {
+        const key = groupBy === 'venue' ? r.venue : Utils.stationKey(r);
+        const g = m.get(key) || { label: key, days: 0, crew: new Map(), active: new Set() };
+        const d = Utils.daysBetween(r.from_date, Utils.realEnd(r, today));
+        g.days += d;
+        const c = g.crew.get(r.cm_id) || { name: r.cm_name, days: 0 };
+        c.days += d; g.crew.set(r.cm_id, c);
+        if (Utils.isActive(r, today)) g.active.add(r.cm_id);
+        m.set(key, g);
+      });
+      return [...m.values()].sort((a, b) => b.crew.size - a.crew.size || b.days - a.days || a.label.localeCompare(b.label));
+    },
+
+    summaries(records, today = Utils.today()) {
+      return [...Data.index(records).values()].map(l => Data.summarize(l, today));
+    },
+  };
+
+  /* ---------- 2. REPORT DEFINITIONS: {filename, caption, rows, columns[{label,get,bar?,wide?}]} ---------- */
+  const Defs = {
+    crewTimeline(list, conflicts, today = Utils.today()) {
+      const s = Data.summarize(list, today);
+      return {
+        filename: `VV_Work_History_${s.cm_id}_${today}.csv`,
+        rows: [...s.records].reverse(),
+        columns: [
+          { label: 'From',     get: r => r.from_date },
+          { label: 'To',       get: r => r.to_date || 'Present' },
+          { label: 'Venue',    get: r => r.venue },
+          { label: 'Station',  get: r => r.station },
+          { label: 'Position', get: r => r.position },
+          { label: 'Duration', get: r => fmt(Utils.daysBetween(r.from_date, Utils.realEnd(r, today))) },
+          { label: 'Note',     get: r => (conflicts.has(r.id) ? 'Overlaps another record' : '') },
+        ],
+      };
+    },
+
+    crewBreakdown(list, today = Utils.today()) {
+      const rows = Data.breakdown(list, today);
+      const max = Math.max(0, ...rows.map(r => r.days));
+      return {
+        rows,
+        columns: [
+          { label: 'Venue',        get: r => r.venue },
+          { label: 'Station',      get: r => r.station },
+          { label: 'Time there',   get: r => fmt(r.days), bar: r => pct(r.days, max) },
+          { label: 'Times worked', get: r => r.times },
+          { label: 'First',        get: r => r.first },
+          { label: 'Last',         get: r => (r.current ? 'Present' : r.last) },
+        ],
+      };
+    },
+
+    stations(records, today = Utils.today()) {
+      const byVenue = state.groupBy === 'venue';
+      const rows = Data.byStation(records, state.groupBy, today);
+      const max = Math.max(0, ...rows.map(r => r.crew.size));
+      return {
+        filename: `VV_Report_By_${byVenue ? 'Venue' : 'Station'}_${today}.csv`,
+        caption: `How many different crew members have worked each ${byVenue ? 'venue' : 'station'}, who they are and how long they spent there. Sorted by number of crew.`,
+        rows,
+        columns: [
+          { label: byVenue ? 'Venue' : 'Venue — station', get: r => r.label },
+          { label: 'Crew who worked here', get: r => r.crew.size, bar: r => pct(r.crew.size, max) },
+          { label: 'Working now', get: r => r.active.size },
+          { label: 'Total time',  get: r => fmt(r.days) },
+          { label: 'Crew (time there)', wide: true,
+            get: r => [...r.crew.values()].sort((a, b) => b.days - a.days).map(c => `${c.name} (${fmt(c.days)})`).join(', ') },
+        ],
+      };
+    },
+
+    tenure(records, today = Utils.today()) {
+      const rows = Data.summaries(records, today)
+        .sort((a, b) => b.tenureDays - a.tenureDays || a.cm_name.localeCompare(b.cm_name));
+      const max = Math.max(0, ...rows.map(r => r.tenureDays));
+      return {
+        filename: `VV_Report_Years_With_Company_${today}.csv`,
+        caption: 'Years with company = first station record to latest end date (today if still working). Time on stations counts overlapping days once. Based only on records logged in this tool.',
+        rows,
+        columns: [
+          { label: '#',            get: (r, i) => i + 1 },
+          { label: 'CM ID',        get: r => r.cm_id },
+          { label: 'Name',         get: r => r.cm_name },
+          { label: 'First record', get: r => r.first },
+          { label: 'Years with company', get: r => yrs(r.tenureDays), bar: r => pct(r.tenureDays, max) },
+          { label: 'Time on stations',   get: r => fmt(r.workedDays) },
+          { label: 'Stations',     get: r => r.stationCount },
+          { label: 'Status',       get: r => (r.active ? 'Active' : 'Not active') },
+        ],
+      };
+    },
+
+    mostStations(records, today = Utils.today()) {
+      const rows = Data.summaries(records, today)
+        .sort((a, b) => b.stationCount - a.stationCount || b.venueCount - a.venueCount || b.tenureDays - a.tenureDays);
+      const max = Math.max(0, ...rows.map(r => r.stationCount));
+      return {
+        filename: `VV_Report_Most_Stations_${today}.csv`,
+        caption: 'Crew ranked by the number of different stations (venue + station) they have worked. Ties are broken by venues covered, then years with company.',
+        rows,
+        columns: [
+          { label: '#',        get: (r, i) => i + 1 },
+          { label: 'CM ID',    get: r => r.cm_id },
+          { label: 'Name',     get: r => r.cm_name },
+          { label: 'Stations worked', get: r => r.stationCount, bar: r => pct(r.stationCount, max) },
+          { label: 'Venues',   get: r => r.venueCount },
+          { label: 'Years with company', get: r => yrs(r.tenureDays) },
+          { label: 'Which stations', wide: true, get: r => r.stations.join('; ') },
+        ],
+      };
+    },
+  };
+
+  // The tab bar is built from this list. 'crew' has a custom layout (see Ui.profile).
+  const REGISTRY = [
+    { key: 'crew',         label: 'Crew profile' },
+    { key: 'stations',     label: 'By station',           build: r => Defs.stations(r) },
+    { key: 'tenure',       label: 'Years with company',   build: r => Defs.tenure(r) },
+    { key: 'mostStations', label: 'Most stations worked', build: r => Defs.mostStations(r) },
+  ];
+
+  /* ---------- 3. UI ---------- */
+  const Ui = {
+    crewLabel(id) {
+      const list = Data.index(hooks.getRecords()).get(id);
+      return list ? `${id} — ${list[list.length - 1].cm_name}` : '';
+    },
+    resolveCrew(text) {                               // typed text → cm_id ('' if no match)
+      const t = text.trim().toLowerCase();
+      if (!t) return '';
+      for (const [id, list] of Data.index(hooks.getRecords())) {
+        if (t === id.toLowerCase() || t === list[list.length - 1].cm_name.toLowerCase() || t === Ui.crewLabel(id).toLowerCase()) return id;
+      }
+      return '';
+    },
+
+    // definition → <table>; col.bar(row) draws a ranked bar (top row red, rest grey)
+    table(def) {
+      const head = Utils.el('tr', {}, def.columns.map(c => Utils.el('th', { scope: 'col' }, c.label)));
+      const body = def.rows.map((r, i) => Utils.el('tr', {}, def.columns.map(c => {
+        const text = String(c.get(r, i));
+        if (c.bar) {
+          const w = Math.max(0, Math.min(100, Number(c.bar(r, i)) || 0));
+          return Utils.el('td', {}, Utils.el('div', { class: 'barcell' },
+            Utils.el('div', { class: 'bartrack' }, Utils.el('span', { class: 'barfill' + (i === 0 ? ' top' : ''), style: `width:${w}%` })),
+            Utils.el('b', {}, text)));
+        }
+        return Utils.el('td', c.wide ? { class: 'wide' } : {}, text);
+      })));
+      return Utils.el('div', { class: 'table-wrap' }, Utils.el('table', {}, Utils.el('thead', {}, head), Utils.el('tbody', {}, body)));
+    },
+
+    profile() {
+      const list = state.crewId && Data.index(hooks.getRecords()).get(state.crewId);
+      if (!list) return [Utils.el('p', { class: 'empty' }, 'Select a crew member above to see their full work history.')];
+
+      const s = Data.summarize(list);
+      const breakdown = Defs.crewBreakdown(list);
+      const top = breakdown.rows[0];
+      const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+      const card = ([lbl, num, cap, small]) => Utils.el('div', { class: 'stat' },
+        Utils.el('div', { class: 'lbl' }, lbl),
+        Utils.el('div', { class: 'num' + (small ? ' sm' : '') }, String(num)),
+        Utils.el('div', { class: 'cap' }, cap));
+
+      return [
+        Utils.el('div', { class: 'stats four' }, [
+          ['Stations worked',    s.stationCount, plural(s.venueCount, 'venue')],
+          ['Years with company', yrs(s.tenureDays), `Since ${s.first}`],
+          ['Time on stations',   fmt(s.workedDays), 'Overlapping days counted once'],
+          ['Status',             s.active ? 'Active' : 'Not active', `${s.cm_name} · ${s.position}`, true],
+        ].map(card)),
+        Utils.el('div', { class: 'callout' },
+          Utils.el('div', { class: 'eyebrow' }, 'Profile insight'),
+          Utils.el('p', {}, `${s.cm_name} has worked ${plural(s.stationCount, 'station')} across ${plural(s.venueCount, 'venue')} since ${s.first}. Longest spent at ${top.station} (${top.venue}): ${fmt(top.days)}.`)),
+        Utils.el('div', { class: 'sub' }, 'Time by station'),
+        Ui.table(breakdown),
+        Utils.el('div', { class: 'sub' }, 'Full work history'),
+        Ui.table(Defs.crewTimeline(list, hooks.getConflicts())),
+      ];
+    },
+
+    // the definition that is currently on screen (also what Export CSV saves)
+    current() {
+      const records = hooks.getRecords();
+      if (state.report === 'crew') {
+        const list = state.crewId && Data.index(records).get(state.crewId);
+        return list ? Defs.crewTimeline(list, hooks.getConflicts()) : null;
+      }
+      return records.length ? REGISTRY.find(r => r.key === state.report).build(records) : null;
+    },
+  };
+
+  /* ---------- 4. PUBLIC API ---------- */
+  function render() {
+    const records = hooks.getRecords();
+    $('rep-nav').replaceChildren(...REGISTRY.map(r =>
+      Utils.el('button', { type: 'button', 'data-rep': r.key, 'aria-pressed': String(r.key === state.report) }, r.label)));
+    $('ctl-crew').hidden = state.report !== 'crew';
+    $('ctl-group').hidden = state.report !== 'stations';
+    $('dl-crew').replaceChildren(...[...Data.index(records).keys()].map(id => Utils.el('option', { value: Ui.crewLabel(id) })));
+
+    const body = $('rep-body');
+    if (!records.length) {
+      body.replaceChildren(Utils.el('p', { class: 'empty' }, 'No records yet — reports appear once work history is logged.'));
+    } else if (state.report === 'crew') {
+      body.replaceChildren(...Ui.profile());
+    } else {
+      const def = Ui.current();
+      body.replaceChildren(Utils.el('p', { class: 'caption' }, def.caption), Ui.table(def));
+    }
+  }
+
+  function openProfile(id) {                           // called by the History log "CM ID" links
+    state.report = 'crew'; state.crewId = id;
+    $('crew-pick').value = Ui.crewLabel(id);
+    render();
+  }
+
+  function init(h) {
+    hooks = { ...hooks, ...h };
+    $('rep-nav').addEventListener('click', e => {
+      const key = e.target.closest('[data-rep]')?.dataset.rep;
+      if (key) { state.report = key; render(); }
+    });
+    $('crew-pick').addEventListener('input', e => { state.crewId = Ui.resolveCrew(e.target.value); render(); });
+    $('group-by').addEventListener('change', e => { state.groupBy = e.target.value; render(); });
+    $('rep-export').addEventListener('click', () => {
+      const def = Ui.current();
+      if (!def) { hooks.toast('Nothing to export yet — select a crew member first.'); return; }
+      Exporter.download(Exporter.fromDef(def), def.filename);
+      hooks.toast('Report exported.');
+    });
+  }
+
+  return { init, render, openProfile, data: Data, defs: Defs, state };
+})();
+
+/* =====================================================================
+   G. VIEW – pure rendering from state
    ===================================================================== */
 const View = {
   $: id => document.getElementById(id),
@@ -411,7 +775,7 @@ const View = {
   },
 
   switchTab(name) {
-    ['entry', 'history', 'login'].forEach(n => {
+    ['entry', 'history', 'reports', 'login'].forEach(n => {
       const on = n === name;
       this.$('view-' + n).hidden = !on;
       this.$('tab-' + n)?.setAttribute('aria-selected', on);
@@ -420,6 +784,7 @@ const View = {
 
   setAdminUI(on) {
     this.$('tab-history').hidden = !on;
+    this.$('tab-reports').hidden = !on;
     this.$('stats').hidden = !on;
     this.$('admin-btn').textContent = on ? 'Log out' : 'Admin login';
   },
@@ -479,7 +844,7 @@ const View = {
     body.replaceChildren(...rows.map(r => {
       const open = !r.to_date;
       const tr = Utils.el('tr', { class: flagged.has(r.id) ? 'flag' : '' },
-        Utils.el('td', {}, Utils.el('strong', {}, r.cm_id)),
+        Utils.el('td', {}, Utils.el('button', { class: 'link', type: 'button', 'data-profile': r.cm_id, title: 'Open full work history' }, r.cm_id)),
         Utils.el('td', {}, r.cm_name),
         Utils.el('td', {}, Utils.el('span', { class: 'badge' }, r.position)),
         Utils.el('td', {}, r.venue),
@@ -503,7 +868,7 @@ const View = {
   },
 
   renderAll() {
-    this.renderStats(); this.renderLists(); this.renderHead(); this.renderTable(); this.renderConflicts();
+    this.renderStats(); this.renderLists(); this.renderHead(); this.renderTable(); this.renderConflicts(); Reports.render();
   },
 
   // ---- form helpers
@@ -545,7 +910,7 @@ const View = {
 };
 
 /* =====================================================================
-   G. CONTROLLER – wires events to Store + View (no inline onclick anywhere)
+   H. CONTROLLER – wires events to Store + View (no inline onclick anywhere)
    ===================================================================== */
 const App = {
   init() {
@@ -560,6 +925,10 @@ const App = {
     // tabs
     View.$('tab-entry').addEventListener('click', () => View.switchTab('entry'));
     View.$('tab-history').addEventListener('click', () => { if (!this.admin) return; View.renderAll(); View.switchTab('history'); });
+    View.$('tab-reports').addEventListener('click', () => { if (!this.admin) return; View.renderAll(); View.switchTab('reports'); });
+
+    // reports module owns its own events (see section F)
+    Reports.init({ getRecords: () => Store.records, getConflicts: () => Store.conflictIds(), toast: m => View.toast(m) });
 
     // admin login / logout
     View.$('admin-btn').addEventListener('click', () => {
@@ -594,6 +963,8 @@ const App = {
     // row actions (edit / two-step delete)
     View.$('tbody').addEventListener('click', e => {
       if (!this.admin) return;
+      const prof = e.target.closest('[data-profile]');
+      if (prof) { Reports.openProfile(prof.dataset.profile); View.switchTab('reports'); return; }
       const edit = e.target.closest('[data-edit]'), del = e.target.closest('[data-del]');
       if (edit) {
         const r = Store.records.find(x => x.id === edit.dataset.edit); if (!r) return;
@@ -609,7 +980,7 @@ const App = {
     });
 
     View.$('export-btn').addEventListener('click', () => {
-      Exporter.download(Store.visible()); View.toast('CSV exported (respects current filters).');
+      Exporter.download(Exporter.csv(Store.visible()), `VV_Culinary_Work_History_${Utils.today()}.csv`); View.toast('CSV exported (respects current filters).');
     });
   },
 
